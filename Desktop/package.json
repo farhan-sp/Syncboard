@@ -1,0 +1,70 @@
+{
+  "name": "syncboard-desktop",
+  "version": "1.0.0",
+  "description": "SyncBoard - Local Wi-Fi P2P transfer between Android and Desktop",
+  "main": "src/main/index.js",
+  "scripts": {
+    "dev": "vite",
+    "build:renderer": "vite build",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build": "npm run build:renderer && npm run build:main",
+    "start": "electron .",
+    "start:dev": "electron . --no-sandbox",
+    "server": "node src/main/start_server.js",
+    "test": "node tests/run_tests.js",
+    "dist:win": "npm run build && electron-builder --win nsis",
+    "dist:linux": "npm run build && electron-builder --linux AppImage"
+  },
+  "keywords": ["p2p", "sync", "wifi", "desktop", "electron", "react"],
+  "author": "SyncBoard Team <support@syncboard.local>",
+  "homepage": "https://github.com/syncboard/syncboard",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "lucide-react": "^1.16.0",
+    "qrcode": "^1.5.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "selfsigned": "^5.5.0",
+    "uuid": "^14.0.3",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@types/uuid": "^10.0.0",
+    "@types/ws": "^8.5.14",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "electron": "^44.7.2",
+    "electron-builder": "^25.1.8",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.11"
+  },
+  "build": {
+    "appId": "com.syncboard.desktop",
+    "productName": "SyncBoard",
+    "directories": {
+      "output": "dist-package"
+    },
+    "files": [
+      "dist/**/*",
+      "src/main/**/*",
+      "src/preload/**/*",
+      "src/shared/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": ["nsis", "portable"]
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Network",
+      "maintainer": "SyncBoard Team <support@syncboard.local>"
+    }
+  }
+}

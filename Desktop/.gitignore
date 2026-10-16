@@ -1,0 +1,44 @@
+# Node / Electron / Vite build outputs
+node_modules/
+dist/
+dist-package/
+release/
+data/
+scratch/
+.vite/
+coverage/
+
+# Logs & temp
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.tmp
+
+# Security, Certificates & Secrets
+.env
+.env.local
+*.pem
+*.crt
+*.key
+*.enc
+secrets.json
+install_key.bin
+
+# SQLite & databases
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json

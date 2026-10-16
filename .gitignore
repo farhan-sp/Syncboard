@@ -1,0 +1,92 @@
+# ==========================================
+# SyncBoard Monorepo .gitignore
+# Covers Desktop (Electron/Vite/TS) & Mobile (Flutter/Android)
+# ==========================================
+
+# --- Operating System & Temporary Files ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.tmp
+*.temp
+*~
+
+# --- IDEs & Editors ---
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-workspace
+*.sublime-project
+*.swp
+*.swo
+
+# --- Security, Certificates & Secrets ---
+*.pem
+*.crt
+*.key
+*.enc
+secrets.json
+install_key.bin
+local.properties
+key.properties
+*.jks
+*.keystore
+
+# --- Databases & Logs ---
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==========================================
+# Desktop (Node.js / Electron / Vite)
+# ==========================================
+Desktop/node_modules/
+Desktop/dist/
+Desktop/dist-package/
+Desktop/release/
+Desktop/data/
+Desktop/scratch/
+Desktop/.vite/
+Desktop/coverage/
+
+# ==========================================
+# Mobile (Flutter / Dart / Android)
+# ==========================================
+# Dart & Flutter tools
+Mobile/.dart_tool/
+Mobile/.flutter-plugins
+Mobile/.flutter-plugins-dependencies
+Mobile/.packages
+Mobile/.pub-cache/
+Mobile/.pub/
+Mobile/build/
+Mobile/scratch/
+
+# Android specific (within Mobile)
+Mobile/android/.gradle/
+Mobile/android/local.properties
+Mobile/android/app/build/
+Mobile/android/captures/
+Mobile/android/.externalNativeBuild/
+Mobile/android/.cxx/
+
+# Compiled mobile bundles
+*.apk
+*.aab
+*.dex
+*.class
