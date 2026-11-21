@@ -2,12 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:crypto/crypto.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import '../connection/connection_manager.dart';
+import '../connection/connection_provider.dart';
 import '../crypto/crypto_utils.dart';
 import '../db/database_service.dart';
 import '../db/models.dart';
@@ -32,14 +32,20 @@ class ActiveFileReceiveSession {
   final FileOfferMessage offer;
   final File tempFile;
   final IOSink sink;
+  final TransferItem initialItem;
   int bytesReceived;
+  int lastProgressReportBytes;
+  bool isFinalizing;
   final Completer<File> completionCompleter;
 
   ActiveFileReceiveSession({
     required this.offer,
     required this.tempFile,
     required this.sink,
+    required this.initialItem,
     this.bytesReceived = 0,
+    this.lastProgressReportBytes = 0,
+    this.isFinalizing = false,
     required this.completionCompleter,
   });
 }
@@ -48,13 +54,16 @@ class ActiveFileSendSession {
   final String transferId;
   final File file;
   final int totalSize;
+  final TransferItem initialItem;
   bool isCancelled = false;
+  bool isDisconnected = false;
   final Completer<bool> completionCompleter;
 
   ActiveFileSendSession({
     required this.transferId,
     required this.file,
     required this.totalSize,
+    required this.initialItem,
     required this.completionCompleter,
   });
 }
@@ -68,6 +77,9 @@ class FileTransferManager {
   final Map<String, ActiveFileSendSession> _activeSendSessions = {};
   final Map<String, ActiveFileReceiveSession> _activeReceiveSessions = {};
 
+  StreamSubscription<dynamic>? _messageSubscription;
+  StreamSubscription<ConnectionStatus>? _statusSubscription;
+
   final StreamController<IncomingFileOfferEvent> _incomingOfferController =
       StreamController<IncomingFileOfferEvent>.broadcast();
   final StreamController<TransferItem> _transferUpdateController =
@@ -80,7 +92,12 @@ class FileTransferManager {
     required this.connectionManager,
     required this.databaseService,
   }) {
-    connectionManager.messageStream.listen(_handleIncomingMessage);
+    _messageSubscription = connectionManager.messageStream.listen(_handleIncomingMessage);
+    _statusSubscription = connectionManager.statusStream.listen((status) {
+      if (status == ConnectionStatus.disconnected) {
+        _abortAllActiveTransfers();
+      }
+    });
   }
 
   // --- OUTGOING FILE TRANSFER ---
@@ -89,7 +106,7 @@ class FileTransferManager {
   /// 1. Computes SHA-256 via streaming without loading whole file into memory
   /// 2. Sends file.offer and awaits file.accept or file.reject
   /// 3. Streams file in 256 KB binary chunks
-  /// 4. Sends file.done upon completion
+  /// 4. Awaits file.done verification from receiver
   Future<TransferItem> sendFile({
     required File file,
     required String targetDeviceId,
@@ -164,6 +181,7 @@ class FileTransferManager {
       transferId: transferId,
       file: file,
       totalSize: totalSize,
+      initialItem: transferItem,
       completionCompleter: Completer<bool>(),
     );
     _activeSendSessions[transferId] = sendSession;
@@ -174,16 +192,27 @@ class FileTransferManager {
     try {
       await _streamFileChunks(sendSession, ws);
 
-      // 4. Send file.done { id, ok: true }
-      final doneMsg = FileDoneMessage(id: transferId, ok: true);
-      ws.add(jsonEncode(doneMsg.toJson()));
+      // 4. Wait for receiver's file.done verification result
+      final verifiedOk = await sendSession.completionCompleter.future.timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => true,
+      );
+      if (!verifiedOk) {
+        if (sendSession.isCancelled && !sendSession.isDisconnected) {
+          final cancelledItem = transferItem.copyWith(status: TransferStatus.cancelled);
+          await databaseService.updateTransferStatus(transferId, TransferStatus.cancelled);
+          _transferUpdateController.add(cancelledItem);
+          return cancelledItem;
+        }
+        throw Exception("Verifikasi integritas SHA-256 gagal di perangkat tujuan.");
+      }
 
       final completedItem = transferItem.copyWith(status: TransferStatus.done, progress: 1.0);
       await databaseService.updateTransferStatus(transferId, TransferStatus.done, progress: 1.0);
       _transferUpdateController.add(completedItem);
       return completedItem;
     } catch (e) {
-      if (sendSession.isCancelled) {
+      if (sendSession.isCancelled && !sendSession.isDisconnected) {
         final cancelledItem = transferItem.copyWith(status: TransferStatus.cancelled);
         await databaseService.updateTransferStatus(transferId, TransferStatus.cancelled);
         _transferUpdateController.add(cancelledItem);
@@ -227,23 +256,16 @@ class FileTransferManager {
         ws.add(binaryFrame);
         currentOffset += chunkSize;
 
-        // Periodic progress reporting (every 512 KB)
+        // Periodic local UI progress update (every 512 KB)
         if (currentOffset - lastProgressReport >= 512 * 1024) {
           lastProgressReport = currentOffset;
-          final progress = (currentOffset / session.totalSize).clamp(0.0, 1.0);
-          final progressMsg = FileProgressMessage(id: session.transferId, bytesReceived: currentOffset);
-          ws.add(jsonEncode(progressMsg.toJson()));
+          final progress = session.totalSize > 0
+              ? (currentOffset / session.totalSize).clamp(0.0, 1.0)
+              : 1.0;
 
-          _transferUpdateController.add(TransferItem(
-            id: session.transferId,
-            deviceId: 'active',
-            direction: TransferDirection.outgoing,
-            kind: TransferKind.file,
-            fileSize: session.totalSize,
-            status: TransferStatus.sending,
-            progress: progress,
-            createdAt: DateTime.now(),
-          ));
+          _transferUpdateController.add(
+            session.initialItem.copyWith(status: TransferStatus.sending, progress: progress),
+          );
         }
 
         // Slight yield to keep event loop responsive
@@ -283,10 +305,16 @@ class FileTransferManager {
           await _handleIncomingFileOffer(FileOfferMessage.fromJson(json));
         } else if (type == ProtocolConstants.typeFileAccept) {
           final accept = FileAcceptMessage.fromJson(json);
-          _pendingOfferDecisions[accept.id]?.complete(true);
+          final completer = _pendingOfferDecisions[accept.id];
+          if (completer != null && !completer.isCompleted) {
+            completer.complete(true);
+          }
         } else if (type == ProtocolConstants.typeFileReject) {
           final reject = FileRejectMessage.fromJson(json);
-          _pendingOfferDecisions[reject.id]?.complete(false);
+          final completer = _pendingOfferDecisions[reject.id];
+          if (completer != null && !completer.isCompleted) {
+            completer.complete(false);
+          }
         } else if (type == ProtocolConstants.typeFileProgress) {
           // Progress update from peer
           final progress = FileProgressMessage.fromJson(json);
@@ -330,20 +358,13 @@ class FileTransferManager {
     // 1. Reply file.accept
     ws.add(jsonEncode(FileAcceptMessage(id: offer.id).toJson()));
 
-    // 2. Create temporary file
+    // 2. Create temporary file with sanitized ID
     final tempDir = await getTemporaryDirectory();
-    final tempFile = File(p.join(tempDir.path, '${offer.id}.tmp'));
+    final safeId = FileNameSanitizer.sanitize(offer.id, defaultName: 'temp_offer');
+    final tempFile = File(p.join(tempDir.path, '$safeId.tmp'));
     if (tempFile.existsSync()) tempFile.deleteSync();
 
     final sink = tempFile.openWrite(mode: FileMode.writeOnly);
-
-    final session = ActiveFileReceiveSession(
-      offer: offer,
-      tempFile: tempFile,
-      sink: sink,
-      completionCompleter: Completer<File>(),
-    );
-    _activeReceiveSessions[offer.id] = session;
 
     // 3. Insert into SQLite as "Mengirim" (downloading)
     final isImage = offer.mime.startsWith('image/');
@@ -358,153 +379,220 @@ class FileTransferManager {
       progress: 0.0,
       createdAt: DateTime.now(),
     );
+
+    final session = ActiveFileReceiveSession(
+      offer: offer,
+      tempFile: tempFile,
+      sink: sink,
+      initialItem: initialItem,
+      completionCompleter: Completer<File>(),
+    );
+    _activeReceiveSessions[offer.id] = session;
+
     await databaseService.saveTransfer(initialItem);
     _transferUpdateController.add(initialItem);
+
+    if (offer.size == 0) {
+      session.isFinalizing = true;
+      await _finalizeReceiveSession(session);
+    }
   }
 
   void _handleIncomingBinaryChunk(Uint8List frame) {
     try {
       final chunk = ChunkFraming.unpack(frame);
       final session = _activeReceiveSessions[chunk.transferId];
-      if (session == null) return;
+      if (session == null || session.isFinalizing) return;
 
       session.sink.add(chunk.payload);
       session.bytesReceived += chunk.payload.length;
 
-      final progress = (session.bytesReceived / session.offer.size).clamp(0.0, 1.0);
+      final progress = session.offer.size > 0
+          ? (session.bytesReceived / session.offer.size).clamp(0.0, 1.0)
+          : 1.0;
 
-      _transferUpdateController.add(TransferItem(
-        id: chunk.transferId,
-        deviceId: connectionManager.currentDevice?.deviceId ?? 'desktop',
-        direction: TransferDirection.incoming,
-        kind: session.offer.mime.startsWith('image/') ? TransferKind.photo : TransferKind.file,
-        fileName: session.offer.name,
-        fileSize: session.offer.size,
-        status: TransferStatus.sending,
-        progress: progress,
-        createdAt: DateTime.now(),
-      ));
+      if (session.bytesReceived - session.lastProgressReportBytes >= 256 * 1024 ||
+          session.bytesReceived >= session.offer.size) {
+        session.lastProgressReportBytes = session.bytesReceived;
+        try {
+          connectionManager.activeWebSocket?.add(
+            jsonEncode(FileProgressMessage(id: chunk.transferId, bytesReceived: session.bytesReceived).toJson()),
+          );
+        } catch (_) {}
+
+        _transferUpdateController.add(
+          session.initialItem.copyWith(status: TransferStatus.sending, progress: progress),
+        );
+      }
+
+      if (session.bytesReceived >= session.offer.size) {
+        session.isFinalizing = true;
+        unawaited(_finalizeReceiveSession(session));
+      }
     } catch (_) {}
   }
 
   void _handlePeerProgress(FileProgressMessage progress) {
     final session = _activeSendSessions[progress.id];
     if (session != null) {
-      final ratio = (progress.bytesReceived / session.totalSize).clamp(0.0, 1.0);
-      _transferUpdateController.add(TransferItem(
-        id: progress.id,
-        deviceId: 'active',
-        direction: TransferDirection.outgoing,
-        kind: TransferKind.file,
-        fileSize: session.totalSize,
-        status: TransferStatus.sending,
-        progress: ratio,
-        createdAt: DateTime.now(),
-      ));
+      final ratio = session.totalSize > 0
+          ? (progress.bytesReceived / session.totalSize).clamp(0.0, 1.0)
+          : 1.0;
+      _transferUpdateController.add(
+        session.initialItem.copyWith(status: TransferStatus.sending, progress: ratio),
+      );
     }
   }
 
-  Future<void> _handleFileDone(FileDoneMessage done) async {
-    final session = _activeReceiveSessions[done.id];
-    if (session == null) return;
+  Future<void> _finalizeReceiveSession(ActiveFileReceiveSession session) async {
+    _activeReceiveSessions.remove(session.offer.id);
 
-    await session.sink.flush();
-    await session.sink.close();
+    try {
+      await session.sink.flush();
+      await session.sink.close();
+    } catch (_) {}
 
-    _activeReceiveSessions.remove(done.id);
+    final actualSize = session.tempFile.existsSync() ? await session.tempFile.length() : -1;
+    final actualSha256 = session.tempFile.existsSync()
+        ? await CryptoUtils.calculateFileSha256(session.tempFile)
+        : '';
 
-    if (!done.ok) {
+    if (actualSize != session.offer.size ||
+        actualSha256.toLowerCase() != session.offer.sha256.toLowerCase()) {
       _deleteTempFile(session.tempFile);
-      await databaseService.updateTransferStatus(done.id, TransferStatus.failed);
-      _transferUpdateController.add(TransferItem(
-        id: done.id,
-        deviceId: 'desktop',
-        direction: TransferDirection.incoming,
-        kind: TransferKind.file,
-        status: TransferStatus.failed,
-        createdAt: DateTime.now(),
-      ));
+      await databaseService.updateTransferStatus(session.offer.id, TransferStatus.failed);
+      _transferUpdateController.add(session.initialItem.copyWith(status: TransferStatus.failed));
+
+      try {
+        connectionManager.activeWebSocket?.add(
+          jsonEncode(FileDoneMessage(
+            id: session.offer.id,
+            ok: false,
+            reason: 'Verifikasi ukuran atau SHA-256 gagal',
+          ).toJson()),
+        );
+      } catch (_) {}
       return;
     }
 
-    // 1. Verify size
-    final actualSize = await session.tempFile.length();
-    if (actualSize != session.offer.size) {
-      _deleteTempFile(session.tempFile);
-      await databaseService.updateTransferStatus(done.id, TransferStatus.failed);
-      throw Exception("Ukuran berkas tidak sesuai: $actualSize vs ${session.offer.size}");
-    }
-
-    // 2. Verify SHA-256 checksum
-    final actualSha256 = await CryptoUtils.calculateFileSha256(session.tempFile);
-    if (actualSha256.toLowerCase() != session.offer.sha256.toLowerCase()) {
-      _deleteTempFile(session.tempFile);
-      await databaseService.updateTransferStatus(done.id, TransferStatus.failed);
-      throw Exception("Checksum SHA-256 tidak cocok! Berkas mungkin rusak.");
-    }
-
-    // 3. Sanitize filename and move to destination folder
+    // Sanitize filename and move to destination folder
     final sanitizedName = FileNameSanitizer.sanitize(session.offer.name);
     final appDir = await getApplicationDocumentsDirectory();
     final destDir = Directory(p.join(appDir.path, 'SyncBoard'));
     if (!destDir.existsSync()) destDir.createSync(recursive: true);
 
     final finalFile = FileNameSanitizer.getUniqueFile(destDir, sanitizedName);
-    await session.tempFile.rename(finalFile.path);
+    try {
+      await session.tempFile.rename(finalFile.path);
+    } catch (_) {
+      await session.tempFile.copy(finalFile.path);
+      _deleteTempFile(session.tempFile);
+    }
 
-    // 4. Mark "Selesai" in database
     await databaseService.updateTransferStatus(
-      done.id,
+      session.offer.id,
       TransferStatus.done,
       savedPath: finalFile.path,
       progress: 1.0,
     );
 
-    final completedItem = TransferItem(
-      id: done.id,
-      deviceId: connectionManager.currentDevice?.deviceId ?? 'desktop',
-      direction: TransferDirection.incoming,
-      kind: session.offer.mime.startsWith('image/') ? TransferKind.photo : TransferKind.file,
-      fileName: p.basename(finalFile.path),
-      fileSize: actualSize,
-      savedPath: finalFile.path,
-      status: TransferStatus.done,
-      progress: 1.0,
-      createdAt: DateTime.now(),
+    _transferUpdateController.add(
+      session.initialItem.copyWith(
+        fileName: p.basename(finalFile.path),
+        fileSize: actualSize,
+        savedPath: finalFile.path,
+        status: TransferStatus.done,
+        progress: 1.0,
+      ),
     );
-    _transferUpdateController.add(completedItem);
+
+    try {
+      connectionManager.activeWebSocket?.add(
+        jsonEncode(FileDoneMessage(id: session.offer.id, ok: true).toJson()),
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _handleFileDone(FileDoneMessage done) async {
+    final sendSession = _activeSendSessions[done.id];
+    if (sendSession != null) {
+      if (!sendSession.completionCompleter.isCompleted) {
+        sendSession.completionCompleter.complete(done.ok);
+      }
+      return;
+    }
+
+    final receiveSession = _activeReceiveSessions[done.id];
+    if (receiveSession == null || receiveSession.isFinalizing) return;
+
+    if (!done.ok) {
+      _activeReceiveSessions.remove(done.id);
+      try {
+        await receiveSession.sink.close();
+      } catch (_) {}
+      _deleteTempFile(receiveSession.tempFile);
+      await databaseService.updateTransferStatus(done.id, TransferStatus.failed);
+      _transferUpdateController.add(receiveSession.initialItem.copyWith(status: TransferStatus.failed));
+      return;
+    }
+
+    receiveSession.isFinalizing = true;
+    await _finalizeReceiveSession(receiveSession);
   }
 
   void _handleTransferCancel(String transferId) {
     // If receiving:
     final receiveSession = _activeReceiveSessions.remove(transferId);
     if (receiveSession != null) {
-      receiveSession.sink.close();
+      receiveSession.sink.close().catchError((_) {});
       _deleteTempFile(receiveSession.tempFile);
       databaseService.updateTransferStatus(transferId, TransferStatus.cancelled);
-      _transferUpdateController.add(TransferItem(
-        id: transferId,
-        deviceId: 'desktop',
-        direction: TransferDirection.incoming,
-        kind: TransferKind.file,
-        status: TransferStatus.cancelled,
-        createdAt: DateTime.now(),
-      ));
+      _transferUpdateController.add(
+        receiveSession.initialItem.copyWith(status: TransferStatus.cancelled),
+      );
     }
 
     // If sending:
     final sendSession = _activeSendSessions.remove(transferId);
     if (sendSession != null) {
       sendSession.isCancelled = true;
+      if (!sendSession.completionCompleter.isCompleted) {
+        sendSession.completionCompleter.complete(false);
+      }
       databaseService.updateTransferStatus(transferId, TransferStatus.cancelled);
-      _transferUpdateController.add(TransferItem(
-        id: transferId,
-        deviceId: 'desktop',
-        direction: TransferDirection.outgoing,
-        kind: TransferKind.file,
-        status: TransferStatus.cancelled,
-        createdAt: DateTime.now(),
-      ));
+      _transferUpdateController.add(
+        sendSession.initialItem.copyWith(status: TransferStatus.cancelled),
+      );
+    }
+  }
+
+  void _abortAllActiveTransfers() {
+    for (final completer in _pendingOfferDecisions.values) {
+      if (!completer.isCompleted) {
+        completer.completeError(StateError("Koneksi ke desktop terputus."));
+      }
+    }
+    _pendingOfferDecisions.clear();
+
+    for (final s in _activeReceiveSessions.values.toList()) {
+      _activeReceiveSessions.remove(s.offer.id);
+      if (!s.isFinalizing) {
+        s.sink.close().catchError((_) {});
+        _deleteTempFile(s.tempFile);
+        databaseService.updateTransferStatus(s.offer.id, TransferStatus.failed);
+        _transferUpdateController.add(s.initialItem.copyWith(status: TransferStatus.failed));
+      }
+    }
+
+    for (final s in _activeSendSessions.values.toList()) {
+      _activeSendSessions.remove(s.transferId);
+      s.isDisconnected = true;
+      s.isCancelled = true;
+      if (!s.completionCompleter.isCompleted) {
+        s.completionCompleter.complete(false);
+      }
+      databaseService.updateTransferStatus(s.transferId, TransferStatus.failed);
+      _transferUpdateController.add(s.initialItem.copyWith(status: TransferStatus.failed));
     }
   }
 
@@ -534,8 +622,10 @@ class FileTransferManager {
   }
 
   void dispose() {
+    _messageSubscription?.cancel();
+    _statusSubscription?.cancel();
     for (final s in _activeReceiveSessions.values) {
-      s.sink.close();
+      s.sink.close().catchError((_) {});
       _deleteTempFile(s.tempFile);
     }
     _activeReceiveSessions.clear();

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../connection/connection_provider.dart';
@@ -61,7 +62,6 @@ final StateNotifierProvider<TransfersNotifier, List<TransferItem>> transfersProv
   final dbService = ref.watch(databaseServiceProvider);
   final textManager = ref.watch(textTransferManagerProvider);
   final fileManager = ref.watch(fileTransferManagerProvider);
-  final settings = ref.watch(settingsProvider);
 
   // Keep retention cleanup service active
   ref.watch(retentionCleanupServiceProvider);
@@ -70,7 +70,7 @@ final StateNotifierProvider<TransfersNotifier, List<TransferItem>> transfersProv
     dbService: dbService,
     textManager: textManager,
     fileManager: fileManager,
-    settings: settings,
+    getSettings: () => ref.read(settingsProvider),
   );
 
   notifier.loadInitialTransfers();
@@ -81,23 +81,33 @@ class TransfersNotifier extends StateNotifier<List<TransferItem>> {
   final DatabaseService dbService;
   final TextTransferManager textManager;
   final FileTransferManager fileManager;
-  final SettingsData settings;
+  final SettingsData Function() getSettings;
+
+  late final StreamSubscription<TransferItem> _incomingTextSub;
+  late final StreamSubscription<TransferItem> _transferUpdateSub;
 
   TransfersNotifier({
     required this.dbService,
     required this.textManager,
     required this.fileManager,
-    required this.settings,
+    required this.getSettings,
   }) : super([]) {
     // 1. Listen to incoming text stream
-    textManager.incomingTextStream.listen((incomingItem) {
+    _incomingTextSub = textManager.incomingTextStream.listen((incomingItem) {
       _upsertItem(incomingItem);
     });
 
     // 2. Listen to file transfer progress & state updates
-    fileManager.transferUpdateStream.listen((updatedItem) {
+    _transferUpdateSub = fileManager.transferUpdateStream.listen((updatedItem) {
       _upsertItem(updatedItem);
     });
+  }
+
+  @override
+  void dispose() {
+    _incomingTextSub.cancel();
+    _transferUpdateSub.cancel();
+    super.dispose();
   }
 
   void _upsertItem(TransferItem newItem) {
@@ -110,38 +120,13 @@ class TransfersNotifier extends StateNotifier<List<TransferItem>> {
   Future<void> loadInitialTransfers() async {
     try {
       final items = await dbService.getAllTransfers();
-      if (items.isNotEmpty) {
-        state = items;
-      } else {
-        state = [
-          TransferItem(
-            id: 'tr-001',
-            deviceId: 'desktop-macbook-pro',
-            direction: TransferDirection.incoming,
-            kind: TransferKind.text,
-            textBody: 'Catatan penting: Mohon cek dokumen anggaran proyek sebelum rapat jam 14:00.',
-            status: TransferStatus.done,
-            pinned: true,
-            createdAt: DateTime.now().subtract(const Duration(minutes: 45)),
-          ),
-          TransferItem(
-            id: 'tr-002',
-            deviceId: 'desktop-macbook-pro',
-            direction: TransferDirection.incoming,
-            kind: TransferKind.link,
-            textBody: 'https://flutter.dev/docs/get-started/install',
-            status: TransferStatus.done,
-            pinned: false,
-            createdAt: DateTime.now().subtract(const Duration(minutes: 32)),
-          ),
-        ];
-      }
+      state = items;
     } catch (_) {}
   }
 
   Future<void> sendText(String text, {String? targetDeviceId}) async {
-    final devId = targetDeviceId ?? 'desktop-macbook-pro';
-    final isUrl = Uri.tryParse(text)?.hasAbsolutePath ?? false;
+    final devId = targetDeviceId ?? 'desktop';
+    final isUrl = TextTransferManager.isWebUrl(text);
 
     final tempId = 'temp-${DateTime.now().millisecondsSinceEpoch}';
     final tempItem = TransferItem(
@@ -157,6 +142,7 @@ class TransfersNotifier extends StateNotifier<List<TransferItem>> {
     state = [...state, tempItem];
 
     try {
+      final settings = getSettings();
       final resultItem = await textManager.sendText(
         body: text,
         targetDeviceId: devId,

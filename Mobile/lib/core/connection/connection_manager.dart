@@ -108,7 +108,9 @@ class ConnectionManager {
         await ForegroundServiceManager.stopService();
       } catch (_) {}
 
-      if (!_manualDisconnect) {
+      if (!_manualDisconnect &&
+          e is! CertificateFingerprintMismatchException &&
+          e is! AuthException) {
         _scheduleReconnect();
       }
     }

@@ -27,6 +27,17 @@ class TextTransferManager {
     connectionManager.messageStream.listen(_handleIncomingMessage);
   }
 
+  static bool isWebUrl(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty || trimmed.contains(RegExp(r'\s'))) {
+      return false;
+    }
+    final uri = Uri.tryParse(trimmed);
+    return uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty;
+  }
+
   /// Sends a text or link message over the active WebSocket:
   /// 1. Constructs TextSendMessage without trimming
   /// 2. Inserts into SQLite as "Mengirim"
@@ -45,7 +56,7 @@ class TextTransferManager {
     }
 
     final id = _uuid.v4();
-    final isUrl = Uri.tryParse(body)?.hasAbsolutePath ?? false;
+    final isUrl = isWebUrl(body);
     final kindStr = isUrl ? 'link' : 'text';
     final now = DateTime.now();
 

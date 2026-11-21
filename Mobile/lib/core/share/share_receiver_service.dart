@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import '../transfers/text_transfer_manager.dart';
 
 enum SharedContentType { text, link, photo, file }
 
@@ -64,7 +64,7 @@ class ShareReceiverService {
         files: files,
       ));
     } else if (textContent != null && textContent.isNotEmpty) {
-      final isUrl = Uri.tryParse(textContent)?.hasAbsolutePath ?? false;
+      final isUrl = TextTransferManager.isWebUrl(textContent);
       _sharedContentController.add(SharedContent(
         type: isUrl ? SharedContentType.link : SharedContentType.text,
         text: textContent,

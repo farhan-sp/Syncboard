@@ -290,7 +290,7 @@ class DatabaseService {
     final db = await database;
     return await db.delete(
       'transfers',
-      where: 'expires_at IS NOT NULL AND expires_at <= ?',
+      where: 'pinned = 0 AND expires_at IS NOT NULL AND expires_at <= ?',
       whereArgs: [now.millisecondsSinceEpoch],
     );
   }

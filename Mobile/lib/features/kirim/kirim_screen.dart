@@ -1,17 +1,13 @@
-import 'dart:async';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/connection/connection_provider.dart';
-import '../../core/db/models.dart';
-import '../../core/db/settings_provider.dart';
 import '../../core/transfers/file_transfer_manager.dart';
 import '../../core/transfers/transfers_provider.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/widgets/chat_bubble.dart';
-import 'incoming_file_sheet.dart';
 
 class KirimScreen extends ConsumerStatefulWidget {
   const KirimScreen({super.key});
@@ -23,62 +19,12 @@ class KirimScreen extends ConsumerStatefulWidget {
 class _KirimScreenState extends ConsumerState<KirimScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  StreamSubscription? _offerSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    // Listen for incoming file transfer offers
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final fileManager = ref.read(fileTransferManagerProvider);
-      _offerSubscription = fileManager.incomingOfferStream.listen(_handleIncomingFileOffer);
-    });
-  }
 
   @override
   void dispose() {
-    _offerSubscription?.cancel();
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _handleIncomingFileOffer(IncomingFileOfferEvent event) {
-    final settings = ref.read(settingsProvider);
-
-    // If user disabled confirmation setting: auto-accept
-    if (!settings.requireFileConfirmation) {
-      if (!event.decisionCompleter.isCompleted) {
-        event.decisionCompleter.complete(true);
-      }
-      return;
-    }
-
-    // Show approval bottom sheet
-    showModalBottomSheet(
-      context: context,
-      isDismissible: false,
-      enableDrag: false,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => IncomingFileSheet(
-        offer: event.offer,
-        senderDeviceName: event.senderDeviceName,
-        saveLocation: settings.saveFolder,
-        onDecision: (accepted) {
-          Navigator.pop(ctx);
-          if (!event.decisionCompleter.isCompleted) {
-            event.decisionCompleter.complete(accepted);
-          }
-        },
-        onPickLocation: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Dapat diubah di tab Pengaturan")),
-          );
-        },
-      ),
-    );
   }
 
   void _handleSend() {

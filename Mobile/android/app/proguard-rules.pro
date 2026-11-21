@@ -1,5 +1,8 @@
 # Proguard / R8 rules for SyncBoard Mobile Release Builds
 
+# Application MainActivity
+-keep class com.syncboard.mobile.** { *; }
+
 # Flutter Core & Plugins
 -keep class io.flutter.app.** { *; }
 -keep class io.flutter.plugin.** { *; }
@@ -29,3 +32,9 @@
 
 # Kotlin Coroutines
 -keep class kotlinx.coroutines.** { *; }
+
+# Dart JNI & Path Provider
+-keep class com.github.dart_lang.jni.** { *; }
+
+# Permission Handler
+-keep class com.baseflow.permissionhandler.** { *; }
