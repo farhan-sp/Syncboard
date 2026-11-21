@@ -12,7 +12,7 @@
     "start:dev": "electron . --no-sandbox",
     "server": "node src/main/start_server.js",
     "test": "node tests/run_tests.js",
-    "dist:win": "npm run build && electron-builder --win nsis",
+    "dist:win": "npm run build && node scripts/dist-win.js",
     "dist:linux": "npm run build && electron-builder --linux AppImage"
   },
   "keywords": ["p2p", "sync", "wifi", "desktop", "electron", "react"],
@@ -59,7 +59,8 @@
       "package.json"
     ],
     "win": {
-      "target": ["nsis", "portable"]
+      "target": ["nsis", "portable"],
+      "signAndEditExecutable": false
     },
     "linux": {
       "target": ["AppImage"],
