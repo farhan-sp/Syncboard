@@ -4,10 +4,11 @@ import { DeviceModel } from '@shared/types';
 interface PillCollapsedProps {
   device: DeviceModel | null;
   hasUnread?: boolean;
+  clipboardFlash?: boolean;
   onClick: () => void;
 }
 
-export const PillCollapsed: React.FC<PillCollapsedProps> = ({ device, hasUnread, onClick }) => {
+export const PillCollapsed: React.FC<PillCollapsedProps> = ({ device, hasUnread, clipboardFlash, onClick }) => {
   const isConnected = device?.status === 'connected';
   const deviceName = device?.name || 'Belum terhubung';
 
@@ -29,22 +30,25 @@ export const PillCollapsed: React.FC<PillCollapsedProps> = ({ device, hasUnread,
       <div className="relative flex items-center justify-center shrink-0">
         <span
           className={`w-2 h-2 rounded-full transition-colors ${
-            isConnected ? 'bg-accent' : 'bg-text-muted'
+            clipboardFlash ? 'bg-emerald-400' : isConnected ? 'bg-accent' : 'bg-text-muted'
           }`}
         />
-        {hasUnread && (
+        {clipboardFlash && (
+          <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+        )}
+        {hasUnread && !clipboardFlash && (
           <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-accent animate-ping" />
         )}
       </div>
 
       {/* "SyncBoard" label */}
       <span className="text-[13px] font-semibold text-text shrink-0 leading-none">
-        SyncBoard
+        {clipboardFlash ? 'Disalin!' : 'SyncBoard'}
       </span>
 
       {/* Device Name */}
       <span className="text-[12px] text-text-muted truncate max-w-[65px] leading-none">
-        {deviceName}
+        {clipboardFlash ? 'Clipboard' : deviceName}
       </span>
     </div>
   );

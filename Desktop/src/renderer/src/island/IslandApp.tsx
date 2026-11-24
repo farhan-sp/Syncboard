@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect, useRef, useCallback } from 'react';
+import React, { useReducer, useEffect, useRef, useCallback, useState } from 'react';
 import {
   islandReducer,
   INITIAL_ISLAND_CONTEXT,
@@ -14,6 +14,7 @@ import { useTransfers } from '../hooks/useTransfers';
 
 export const IslandApp: React.FC = () => {
   const [state, dispatch] = useReducer(islandReducer, INITIAL_ISLAND_CONTEXT);
+  const [clipboardCopied, setClipboardCopied] = useState(false);
   const { settings, updateSetting } = useSettings();
   const { devices, activeDevice } = useDevices();
   const { transfers, sendText, sendFiles } = useTransfers();
@@ -255,12 +256,18 @@ export const IslandApp: React.FC = () => {
       });
     });
 
+    const unsubClipboard = api.onEvent('island:clipboard-auto-copied', () => {
+      setClipboardCopied(true);
+      setTimeout(() => setClipboardCopied(false), 2000);
+    });
+
     return () => {
       unsubActivity?.();
       unsubToggle?.();
       unsubProgress?.();
       unsubDone?.();
       unsubError?.();
+      unsubClipboard?.();
     };
   }, [state.state, handleExpand]);
 
@@ -286,9 +293,13 @@ export const IslandApp: React.FC = () => {
   };
 
   const handleSelectFiles = async (): Promise<string[] | null> => {
-    const api = (window as any).island || (window as any).syncboard;
-    if (api?.selectFilesToSend) {
-      return await api.selectFilesToSend();
+    try {
+      const api = (window as any).island || (window as any).syncboard;
+      if (api?.selectFilesToSend) {
+        return await api.selectFilesToSend();
+      }
+    } catch (err) {
+      console.error('Failed to select files:', err);
     }
     return null;
   };
@@ -379,6 +390,7 @@ export const IslandApp: React.FC = () => {
           <PillCollapsed
             device={activeDevice}
             hasUnread={state.hasUnreadInExpanded}
+            clipboardFlash={clipboardCopied}
             onClick={handleExpand}
           />
         )}

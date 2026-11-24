@@ -175,6 +175,12 @@ function setupIslandIpc(getMainWindow) {
     return true;
   });
 
+  // Fresh transfers handler
+  ipcMain.removeHandler('island:get-transfers-fresh');
+  ipcMain.handle('island:get-transfers-fresh', async () => {
+    return db.getTransfers({ limit: 100 });
+  });
+
   // Island action handler
   ipcMain.removeHandler('island:action');
   ipcMain.handle('island:action', async (_event, { name, payload }) => {
@@ -208,6 +214,9 @@ function setupIslandIpc(getMainWindow) {
 
       case 'getTransfers':
         return db.getTransfers(payload || {});
+
+      case 'getTransfersFresh':
+        return db.getTransfers({ limit: payload?.limit || 100 });
 
       case 'getNetworkInfo': {
         const certInfo = await getOrCreateCertificate();
@@ -253,6 +262,17 @@ function setupIslandIpc(getMainWindow) {
           return results;
         }
         return false;
+      }
+
+      case 'selectFilesToSend': {
+        const res = await dialog.showOpenDialog(islandWindow || mainWin, {
+          title: 'Pilih Berkas untuk Dikirim',
+          properties: ['openFile', 'multiSelections'],
+        });
+        if (!res.canceled && res.filePaths.length > 0) {
+          return res.filePaths;
+        }
+        return null;
       }
 
       case 'respondFileOffer': {
@@ -398,6 +418,12 @@ function broadcastThemeChanged(themeSetting, isDark) {
 function handleServerActivity(event, data, getMainWindow) {
   const enabled = db.getSetting('islandEnabled', 'true') !== 'false';
 
+  const isCompleted = data?.status === 'completed' || data?.status === 'Selesai';
+  const isIncoming = data?.direction === 'incoming';
+  const isTextOrLink = data?.kind === 'text' || data?.kind === 'link' || data?.type === 'text' || data?.type === 'link';
+  const textContent = data?.textBody || data?.textContent || '';
+  const isUrl = (data?.kind === 'link' || data?.type === 'link') || /^https?:\/\//i.test(textContent);
+
   // 1. Wayland fallback: native notifications
   if (isWayland) {
     if (!enabled) return;
@@ -410,25 +436,29 @@ function handleServerActivity(event, data, getMainWindow) {
       }
     };
 
-    if (event === 'event:transfer-update' && data?.status === 'completed' && data?.direction === 'incoming') {
-      if (data.type === 'text') {
-        const isUrl = /^https?:\/\//i.test(data.textContent || '');
+    if (event === 'event:transfer-update' && isCompleted && isIncoming) {
+      if (isTextOrLink && textContent) {
+        try {
+          clipboard.writeText(textContent);
+        } catch (err) {
+          console.error('[SyncBoard Island] Gagal auto-copy ke clipboard di Wayland:', err);
+        }
         showWaylandNotification(
           isUrl ? 'Tautan Masuk' : 'Teks Masuk',
-          data.textContent || 'Pesan teks baru diterima',
+          textContent || 'Pesan teks baru diterima',
           openApp
         );
       } else {
         showWaylandNotification(
           'Berkas Selesai Diterima',
-          data.filename || 'Berkas baru telah disimpan',
+          data.fileName || data.filename || 'Berkas baru telah disimpan',
           openApp
         );
       }
     } else if (event === 'event:file-offer') {
       showWaylandNotification(
         'Tawaran Berkas Masuk',
-        `${data.filename} (${data.size ? Math.round(data.size / 1024) + ' KB' : ''}) dari ${data.deviceName || 'Perangkat'}`,
+        `${data.filename || data.name} (${data.size ? Math.round(data.size / 1024) + ' KB' : ''}) dari ${data.deviceName || 'Perangkat'}`,
         openApp
       );
     }
@@ -436,23 +466,45 @@ function handleServerActivity(event, data, getMainWindow) {
   }
 
   // 2. Window-based Island
-  if (!islandWindow || islandWindow.isDestroyed()) return;
+  if (!islandWindow || islandWindow.isDestroyed()) {
+    // Tetap auto-copy ke clipboard meskipun jendela Island tidak terbuka
+    if (event === 'event:transfer-update' && isCompleted && isIncoming && isTextOrLink && textContent) {
+      try {
+        clipboard.writeText(textContent);
+        console.log(`[SyncBoard Clipboard] Auto-copied incoming text (${textContent.length} chars)`);
+      } catch (err) {
+        console.error('[SyncBoard Island] Gagal auto-copy ke clipboard:', err);
+      }
+    }
+    return;
+  }
 
   // Forward raw events
   islandWindow.webContents.send(event, data);
 
   // Map to Island specific events
   if (event === 'event:transfer-update') {
-    islandWindow.webContents.send('transfers:update', data);
+    const freshTransfer = data?.id ? db.getTransfer(data.id) : null;
+    islandWindow.webContents.send('transfers:update', freshTransfer || data);
 
     // If incoming completed text
-    if (data?.status === 'completed' && data?.direction === 'incoming' && data?.type === 'text') {
-      const isUrl = /^https?:\/\//i.test(data.textContent || '');
+    if (isCompleted && isIncoming && isTextOrLink && textContent) {
+      // Auto-copy ke OS clipboard
+      try {
+        clipboard.writeText(textContent);
+        islandWindow.webContents.send('island:clipboard-auto-copied', {
+          text: textContent,
+          isUrl,
+        });
+      } catch (err) {
+        console.error('[SyncBoard Island] Gagal auto-copy ke clipboard:', err);
+      }
+
       const activity = {
         id: data.id,
         type: 'text_link',
         deviceName: data.deviceName || 'Perangkat',
-        text: data.textContent || '',
+        text: textContent,
         isUrl,
         timestamp: Date.now(),
       };
@@ -461,9 +513,9 @@ function handleServerActivity(event, data, getMainWindow) {
     }
 
     // If transfer done or error
-    if (data?.status === 'completed') {
+    if (isCompleted) {
       islandWindow.webContents.send('transfer:done', data);
-    } else if (data?.status === 'failed' || data?.status === 'cancelled') {
+    } else if (data?.status === 'failed' || data?.status === 'cancelled' || data?.status === 'Gagal' || data?.status === 'Dibatalkan') {
       islandWindow.webContents.send('transfer:error', data);
     }
   } else if (event === 'event:file-offer') {
