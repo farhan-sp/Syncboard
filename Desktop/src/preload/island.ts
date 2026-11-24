@@ -7,6 +7,7 @@ const islandApi = {
       'theme:changed',
       'island:activity',
       'island:activity-update',
+      'island:clipboard-auto-copied',
       'island:toggle',
       'island:settings',
       'devices:update',
@@ -45,6 +46,8 @@ const islandApi = {
     const validActions = [
       'sendText',
       'sendFiles',
+      'selectFilesToSend',
+      'getTransfersFresh',
       'respondFileOffer',
       'cancelTransfer',
       'retryTransfer',
@@ -81,6 +84,10 @@ const islandApi = {
     ipcRenderer.invoke('island:action', { name: 'sendText', payload: { text, kind } }),
   sendFiles: (paths: string[]) =>
     ipcRenderer.invoke('island:action', { name: 'sendFiles', payload: { paths } }),
+  selectFilesToSend: () =>
+    ipcRenderer.invoke('island:action', { name: 'selectFilesToSend' }),
+  getTransfersFresh: () =>
+    ipcRenderer.invoke('island:action', { name: 'getTransfersFresh' }),
   respondFileOffer: (payload: any) =>
     ipcRenderer.invoke('island:action', { name: 'respondFileOffer', payload }),
   cancelTransfer: (id: string) =>

@@ -65,6 +65,17 @@ export const PanelExpanded: React.FC<PanelExpandedProps> = ({
 
   const isConnected = activeDevice?.status === 'connected';
 
+  const handlePasteClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        setInputText(text);
+      }
+    } catch (err) {
+      console.error('Failed to read clipboard:', err);
+    }
+  };
+
   const handleSendText = async () => {
     if (!inputText.trim() || isSending) return;
     setIsSending(true);
@@ -176,9 +187,20 @@ export const PanelExpanded: React.FC<PanelExpandedProps> = ({
           <div className="space-y-4">
             {/* Quick Text / Link Box */}
             <div className="p-3.5 rounded-2xl bg-surface border border-border flex flex-col gap-2.5">
-              <label className="text-xs font-semibold text-text-secondary">
-                Kirim Teks atau Tautan
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-text-secondary">
+                  Kirim Teks atau Tautan
+                </label>
+                <button
+                  type="button"
+                  onClick={handlePasteClipboard}
+                  className="text-[11px] text-accent hover:underline flex items-center gap-1 font-medium transition-colors"
+                  title="Tempel isi clipboard saat ini"
+                >
+                  <Copy className="w-3 h-3" />
+                  <span>Tempel Clipboard</span>
+                </button>
+              </div>
               <textarea
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
