@@ -39,13 +39,13 @@ export const DeviceCard: React.FC<Props> = ({
   };
 
   return (
-    <div className="glass-panel glass-panel-hover rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="bg-surface border border-border rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-text">
       <div className="flex items-center gap-4 min-w-0">
         <div
           className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
             isConnected
-              ? 'bg-teal-500/10 border-teal-500/30 text-teal-400 glow-teal'
-              : 'bg-slate-800 border-slate-700 text-slate-400'
+              ? 'bg-tile border-border text-accent'
+              : 'bg-surface-inset border-border text-icon-muted'
           }`}
         >
           <Smartphone className="w-6 h-6" />
@@ -58,12 +58,12 @@ export const DeviceCard: React.FC<Props> = ({
                 type="text"
                 value={nameInput}
                 onChange={(e) => setNameInput(e.target.value)}
-                className="bg-slate-900 border border-teal-500/50 rounded-lg px-2.5 py-1 text-sm font-semibold text-white focus:outline-none"
+                className="bg-surface-inset border border-border rounded-lg px-2.5 py-1 text-sm font-semibold text-text focus:outline-none focus:ring-2 focus:ring-accent"
                 autoFocus
               />
               <button
                 onClick={handleSaveRename}
-                className="p-1 rounded-lg bg-teal-500 text-slate-950 hover:bg-teal-400 transition-colors"
+                className="p-1 rounded-lg bg-accent text-on-accent hover:bg-accent-hover transition-colors"
                 title="Simpan"
               >
                 <Check className="w-4 h-4" />
@@ -73,7 +73,7 @@ export const DeviceCard: React.FC<Props> = ({
                   setNameInput(device.name);
                   setIsEditing(false);
                 }}
-                className="p-1 rounded-lg bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                className="p-1 rounded-lg bg-control text-text-muted hover:text-text border border-control-border transition-colors"
                 title="Batal"
               >
                 <X className="w-4 h-4" />
@@ -81,12 +81,12 @@ export const DeviceCard: React.FC<Props> = ({
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <h4 className="font-bold text-base text-slate-100 truncate">
+              <h4 className="font-bold text-base text-text truncate">
                 {device.name}
               </h4>
               <button
                 onClick={() => setIsEditing(true)}
-                className="p-1 text-slate-400 hover:text-teal-400 transition-colors"
+                className="p-1 text-text-muted hover:text-accent transition-colors"
                 title="Ganti Nama"
               >
                 <Edit3 className="w-3.5 h-3.5" />
@@ -94,20 +94,20 @@ export const DeviceCard: React.FC<Props> = ({
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-slate-400">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-text-muted">
             <span className="flex items-center gap-1.5 font-medium">
               <span
                 className={`w-2 h-2 rounded-full ${
-                  isConnected ? 'bg-teal-400 shadow-[0_0_8px_#2dd4bf]' : 'bg-slate-500'
+                  isConnected ? 'bg-accent' : 'bg-icon-muted'
                 }`}
               />
-              <span className={isConnected ? 'text-teal-300 font-semibold' : 'text-slate-400'}>
+              <span className={isConnected ? 'text-accent font-semibold' : 'text-text-muted'}>
                 {isConnected ? 'Terhubung' : 'Terputus'}
               </span>
             </span>
 
             {device.ipAddress && (
-              <span className="font-mono text-slate-400">
+              <span className="font-mono text-text-muted">
                 IP: {device.ipAddress}
               </span>
             )}
@@ -121,16 +121,16 @@ export const DeviceCard: React.FC<Props> = ({
         {isConnected && (
           <button
             onClick={() => onDisconnect(device.id)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-danger-bg hover:opacity-90 active:opacity-80 text-danger-text border border-danger-border transition-colors"
           >
-            <Unplug className="w-3.5 h-3.5 text-amber-400" />
+            <Unplug className="w-3.5 h-3.5" />
             <span>Putuskan</span>
           </button>
         )}
 
         <button
           onClick={() => onRemove(device.id)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-danger-bg hover:opacity-90 active:opacity-80 text-danger-text border border-danger-border transition-colors"
         >
           <Trash2 className="w-3.5 h-3.5" />
           <span>Hapus Pasangan</span>

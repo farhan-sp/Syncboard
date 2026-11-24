@@ -15,6 +15,36 @@ function setupIpcHandlers(getMainWindow) {
   ipcMain.handle('settings:save', async (_event, { key, val }) => {
     if (typeof key !== 'string') throw new Error('Key must be a string');
     db.setSetting(key, val);
+    if (key === 'theme') {
+      const win = getMainWindow();
+      const { nativeTheme } = require('electron');
+      const isDark = val === 'dark' || (val === 'system' && nativeTheme.shouldUseDarkColors);
+      if (win && !win.isDestroyed()) {
+        win.setBackgroundColor(isDark ? '#202020' : '#F3F3F3');
+      }
+      try {
+        const { broadcastThemeChanged } = require('./island');
+        broadcastThemeChanged(val, isDark);
+      } catch {}
+    } else if (key === 'islandEnabled') {
+      try {
+        const { setIslandVisibility } = require('./island');
+        setIslandVisibility(val === true || val === 'true');
+      } catch {}
+    } else if (key === 'islandShortcut') {
+      try {
+        const { setupIslandShortcut } = require('./island');
+        setupIslandShortcut(val);
+      } catch {}
+    }
+    try {
+      const { broadcastEvent } = require('./island');
+      broadcastEvent('settings:update', { key, value: val });
+    } catch {}
+    const win = getMainWindow();
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('settings:update', { key, value: val });
+    }
     return true;
   });
 

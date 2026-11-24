@@ -63,17 +63,17 @@ export const QRDialog: React.FC<Props> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-700/60 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black/50 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+      <div className="bg-surface border border-border rounded-3xl w-full max-w-md shadow-2xl overflow-hidden text-text">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-teal-400 font-semibold text-base">
+        <div className="px-6 py-4 border-b border-divider flex items-center justify-between">
+          <div className="flex items-center gap-2 text-accent font-semibold text-base">
             <QrCode className="w-5 h-5" />
             <span>Pasangkan Ponsel Android</span>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+            className="p-1 rounded-lg text-text-muted hover:text-text hover:bg-control-hover transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -81,28 +81,28 @@ export const QRDialog: React.FC<Props> = ({
 
         {/* State 1: Incoming Pair Request Approval */}
         {pendingPairRequest ? (
-          <div className="p-6 text-center space-y-5 animate-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 rounded-2xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 mx-auto glow-teal">
+          <div className="p-6 text-center space-y-5 animate-in zoom-in-95 duration-150">
+            <div className="w-16 h-16 rounded-2xl bg-tile border border-border flex items-center justify-center text-accent mx-auto shadow-sm">
               <ShieldCheck className="w-8 h-8" />
             </div>
 
             <div>
-              <h3 className="text-lg font-bold text-white">
+              <h3 className="text-lg font-bold text-text">
                 Permintaan Sambungan Baru
               </h3>
-              <p className="text-sm text-slate-400 mt-1">
-                Ponsel <strong className="text-teal-300">{pendingPairRequest.deviceName}</strong> ingin terhubung ke komputer ini.
+              <p className="text-sm text-text-muted mt-1">
+                Ponsel <strong className="text-accent">{pendingPairRequest.deviceName}</strong> ingin terhubung ke komputer ini.
               </p>
             </div>
 
-            <div className="bg-slate-950/70 border border-slate-700/50 rounded-2xl p-5 space-y-1">
-              <span className="text-[11px] font-semibold text-teal-400 uppercase tracking-wider block">
+            <div className="bg-surface-inset border border-border rounded-2xl p-5 space-y-1">
+              <span className="text-[11px] font-semibold text-accent uppercase tracking-wider block">
                 KODE VERIFIKASI IDENTIK
               </span>
-              <span className="text-3xl font-bold font-mono tracking-widest text-white block">
+              <span className="text-3xl font-bold font-mono tracking-widest text-text block">
                 {pendingPairRequest.verificationCode}
               </span>
-              <span className="text-xs text-slate-500 block pt-1">
+              <span className="text-xs text-text-muted block pt-1">
                 Pastikan kode 6-digit pada layar HP Anda persis sama.
               </span>
             </div>
@@ -110,13 +110,13 @@ export const QRDialog: React.FC<Props> = ({
             <div className="grid grid-cols-2 gap-3 pt-2">
               <button
                 onClick={() => onRespondPair(pendingPairRequest.requestId, false)}
-                className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-colors"
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold bg-danger-bg hover:opacity-90 active:opacity-80 text-danger-text border border-danger-border transition-colors"
               >
                 Tolak
               </button>
               <button
                 onClick={() => onRespondPair(pendingPairRequest.requestId, true)}
-                className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold bg-teal-500 hover:bg-teal-600 text-slate-950 font-bold transition-colors shadow-lg shadow-teal-500/25"
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-bold bg-accent hover:bg-accent-hover active:bg-accent-pressed text-on-accent transition-colors shadow-sm"
               >
                 Izinkan
               </button>
@@ -125,7 +125,7 @@ export const QRDialog: React.FC<Props> = ({
         ) : (
           /* State 2: Normal QR Code Display */
           <div className="p-6 space-y-5">
-            <div className="bg-white p-3 rounded-2xl shadow-inner flex items-center justify-center mx-auto w-64 h-64">
+            <div className="bg-white p-3 rounded-2xl shadow-inner flex items-center justify-center mx-auto w-64 h-64 border border-border">
               {session?.qrDataUrl ? (
                 <img
                   src={session.qrDataUrl}
@@ -133,8 +133,8 @@ export const QRDialog: React.FC<Props> = ({
                   className="w-full h-full object-contain"
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center text-slate-400 text-xs">
-                  <RefreshCw className="w-6 h-6 animate-spin text-teal-600 mb-2" />
+                <div className="flex flex-col items-center justify-center text-text-muted text-xs">
+                  <RefreshCw className="w-6 h-6 animate-spin text-accent mb-2" />
                   <span>Membuat Kode QR...</span>
                 </div>
               )}
@@ -142,11 +142,11 @@ export const QRDialog: React.FC<Props> = ({
 
             {/* Countdown timer & Regenerate button */}
             <div className="flex items-center justify-between px-2">
-              <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                <Clock className="w-4 h-4 text-amber-400" />
+              <div className="flex items-center gap-1.5 text-xs text-text-muted">
+                <Clock className="w-4 h-4 text-accent" />
                 <span>
                   Kedaluwarsa dalam:{' '}
-                  <strong className={remainingSec < 20 ? 'text-rose-400' : 'text-slate-200'}>
+                  <strong className={remainingSec < 20 ? 'text-danger-text' : 'text-text'}>
                     {formatTimer(remainingSec)}
                   </strong>
                 </span>
@@ -155,7 +155,7 @@ export const QRDialog: React.FC<Props> = ({
               <button
                 onClick={loadSession}
                 disabled={loading}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-400 hover:text-teal-300 hover:underline disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:underline disabled:opacity-45"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
                 <span>Buat Ulang Kode</span>
@@ -163,21 +163,21 @@ export const QRDialog: React.FC<Props> = ({
             </div>
 
             {/* Step-by-step guidance */}
-            <div className="bg-slate-950/50 border border-white/5 rounded-2xl p-4 space-y-2 text-xs text-slate-300">
+            <div className="bg-surface-inset border border-border rounded-2xl p-4 space-y-2 text-xs text-text-secondary">
               <div className="flex items-start gap-2.5">
-                <span className="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold shrink-0 text-[11px]">
+                <span className="w-5 h-5 rounded-full bg-accent text-on-accent flex items-center justify-center font-bold shrink-0 text-[11px]">
                   1
                 </span>
                 <span>Buka aplikasi <strong>SyncBoard</strong> di ponsel Android.</span>
               </div>
               <div className="flex items-start gap-2.5">
-                <span className="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold shrink-0 text-[11px]">
+                <span className="w-5 h-5 rounded-full bg-accent text-on-accent flex items-center justify-center font-bold shrink-0 text-[11px]">
                   2
                 </span>
                 <span>Pilih menu <strong>Pindai QR</strong> lalu arahkan kamera ke kode di atas.</span>
               </div>
               <div className="flex items-start gap-2.5">
-                <span className="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold shrink-0 text-[11px]">
+                <span className="w-5 h-5 rounded-full bg-accent text-on-accent flex items-center justify-center font-bold shrink-0 text-[11px]">
                   3
                 </span>
                 <span>Pastikan kedua perangkat terhubung ke Wi-Fi lokal yang sama.</span>

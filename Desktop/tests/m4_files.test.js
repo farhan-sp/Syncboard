@@ -469,7 +469,12 @@ async function authenticateClient(ws, deviceId, secret) {
     // Clean up
     clientWs.close();
     await syncBoardServer.stop();
-    fs.rmSync(TEST_DIR, { recursive: true, force: true });
+    try {
+      if (db?.close) db.close();
+    } catch {}
+    try {
+      fs.rmSync(TEST_DIR, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    } catch {}
 
     console.log('\n====================================================');
     console.log(`M4 Test Results: ${passed} PASSED, ${failed} FAILED`);

@@ -12,33 +12,33 @@ export const TransferStatusChip: React.FC<Props> = ({ status, size = 'md' }) => 
 
   const config = {
     Menunggu: {
-      bg: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
+      bg: 'bg-control text-text-muted border-control-border',
       icon: Clock,
       label: 'Menunggu',
     },
     Mengirim: {
-      bg: 'bg-teal-500/10 text-teal-300 border-teal-500/30',
+      bg: 'bg-accent-tint-bg text-accent-tint-text border-accent-tint-bg/40',
       icon: RefreshCw,
       label: 'Mengirim',
       animate: true,
     },
     Selesai: {
-      bg: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
+      bg: 'bg-accent-tint-bg text-accent-tint-text border-accent-tint-bg/40',
       icon: CheckCircle2,
       label: 'Selesai',
     },
     Dibatalkan: {
-      bg: 'bg-slate-500/10 text-slate-400 border-slate-500/30',
+      bg: 'bg-control text-text-muted border-control-border',
       icon: XCircle,
       label: 'Dibatalkan',
     },
     Gagal: {
-      bg: 'bg-rose-500/10 text-rose-300 border-rose-500/30',
+      bg: 'bg-danger-bg text-danger-text border-danger-border',
       icon: AlertCircle,
       label: 'Gagal',
     },
   }[status] || {
-    bg: 'bg-slate-500/10 text-slate-400 border-slate-500/30',
+    bg: 'bg-control text-text-muted border-control-border',
     icon: Clock,
     label: status,
   };

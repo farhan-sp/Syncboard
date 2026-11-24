@@ -37,4 +37,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   retentionHours: 24,
   theme: 'dark',
   startWithSystem: false,
+  islandEnabled: true,
+  islandShortcut: 'CommandOrControl+Shift+Space',
+  displayMode: 'window',
 };

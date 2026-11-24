@@ -114,12 +114,12 @@ export const RiwayatPage: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 p-6 overflow-y-auto">
+    <div className="flex flex-col h-full bg-chat-bg p-6 overflow-y-auto">
       {/* Header & Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-bold text-slate-100">Riwayat Transfer</h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <h2 className="text-xl font-bold text-text">Riwayat Transfer</h2>
+          <p className="text-xs text-text-muted mt-1">
             Telusuri dan kelola data yang pernah dikirim dan diterima
           </p>
         </div>
@@ -130,7 +130,7 @@ export const RiwayatPage: React.FC<Props> = ({
               <button
                 onClick={handleBulkPin}
                 disabled={selectedIds.length === 0}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 disabled:opacity-40 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-control border border-control-border text-accent hover:bg-control-hover active:bg-control-pressed disabled:opacity-45 transition-colors"
               >
                 <Pin className="w-3.5 h-3.5" />
                 <span>Sematkan ({selectedIds.length})</span>
@@ -138,7 +138,7 @@ export const RiwayatPage: React.FC<Props> = ({
               <button
                 onClick={handleBulkDelete}
                 disabled={selectedIds.length === 0}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 disabled:opacity-40 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-danger-bg text-danger-text border border-danger-border hover:opacity-90 active:opacity-80 disabled:opacity-45 transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Hapus ({selectedIds.length})</span>
@@ -148,7 +148,7 @@ export const RiwayatPage: React.FC<Props> = ({
                   setSelectionMode(false);
                   setSelectedIds([]);
                 }}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors"
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-control border border-control-border text-text-secondary hover:bg-control-hover transition-colors"
               >
                 Batal
               </button>
@@ -157,14 +157,14 @@ export const RiwayatPage: React.FC<Props> = ({
             <>
               <button
                 onClick={() => setSelectionMode(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-control hover:bg-control-hover active:bg-control-pressed text-text-secondary border border-control-border transition-colors"
               >
                 <CheckSquare className="w-3.5 h-3.5" />
                 <span>Mode Pilih</span>
               </button>
               <button
                 onClick={onClearAll}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-danger-bg hover:opacity-90 active:opacity-80 text-danger-text border border-danger-border transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Hapus Semua</span>
@@ -183,8 +183,8 @@ export const RiwayatPage: React.FC<Props> = ({
               onClick={() => setFilter(f.id)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                 filter === f.id
-                  ? 'bg-teal-500/15 text-teal-300 border border-teal-500/40 shadow-sm'
-                  : 'bg-slate-900 text-slate-400 hover:bg-slate-800 border border-white/5'
+                  ? 'bg-accent text-on-accent border border-accent shadow-sm'
+                  : 'bg-surface text-text-secondary hover:bg-control-hover hover:text-text border border-chip-border'
               }`}
             >
               {f.label}
@@ -193,27 +193,27 @@ export const RiwayatPage: React.FC<Props> = ({
         </div>
 
         <div className="relative w-full sm:w-64">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari teks atau file..."
-            className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-500/50"
+            className="w-full bg-surface-inset border border-border rounded-xl pl-9 pr-3 py-1.5 text-xs text-text placeholder-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
           />
         </div>
       </div>
 
       {/* List */}
       {filteredTransfers.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-12 text-slate-500">
-          <div className="w-16 h-16 rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600 mb-4">
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-12 text-text-muted">
+          <div className="w-16 h-16 rounded-3xl bg-surface border border-border flex items-center justify-center text-text-muted mb-4">
             <Inbox className="w-8 h-8" />
           </div>
-          <h3 className="text-base font-semibold text-slate-300 mb-1">
+          <h3 className="text-base font-semibold text-text mb-1">
             Tidak Ada Riwayat Ditemukan
           </h3>
-          <p className="text-xs text-slate-400 max-w-sm">
+          <p className="text-xs text-text-muted max-w-sm">
             Riwayat pesan dan transfer berkas Anda akan muncul di sini.
           </p>
         </div>
@@ -226,31 +226,25 @@ export const RiwayatPage: React.FC<Props> = ({
             return (
               <div
                 key={item.id}
-                className={`glass-panel glass-panel-hover rounded-2xl p-4 flex items-center justify-between gap-4 transition-all ${
-                  item.pinned ? 'border-teal-500/30 bg-teal-950/10' : ''
-                } ${isSelected ? 'ring-2 ring-teal-500/60' : ''}`}
+                className={`bg-surface border border-border rounded-2xl p-4 flex items-center justify-between gap-4 transition-all hover:border-chip-border ${
+                  item.pinned ? 'border-accent/40 bg-accent-selected-bg/30' : ''
+                } ${isSelected ? 'bg-accent-selected-bg ring-2 ring-accent' : ''}`}
               >
                 {selectionMode && (
                   <button
                     onClick={() => toggleSelect(item.id)}
-                    className="p-1 text-slate-400 hover:text-teal-400"
+                    className="p-1 text-text-muted hover:text-accent transition-colors"
                   >
                     {isSelected ? (
-                      <CheckSquare className="w-5 h-5 text-teal-400" />
+                      <CheckSquare className="w-5 h-5 text-accent" />
                     ) : (
-                      <Square className="w-5 h-5" />
+                      <Square className="w-5 h-5 text-icon-muted" />
                     )}
                   </button>
                 )}
 
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                  <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
-                      item.direction === 'incoming'
-                        ? 'bg-teal-500/10 border-teal-500/20 text-teal-400'
-                        : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
-                    }`}
-                  >
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-border bg-tile text-accent">
                     {item.direction === 'incoming' ? (
                       <Inbox className="w-5 h-5" />
                     ) : (
@@ -260,33 +254,38 @@ export const RiwayatPage: React.FC<Props> = ({
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-xs font-semibold text-slate-300">
+                      <span className="text-xs font-semibold text-text-secondary">
                         {item.deviceName || 'Ponsel'}
                       </span>
                       <TransferStatusChip status={item.status} size="sm" />
-                      <span className="text-[11px] text-slate-500">{formatDate(item.createdAt)}</span>
+                      <span className="text-[11px] text-text-muted">{formatDate(item.createdAt)}</span>
                       {item.pinned ? (
-                        <span className="text-[11px] font-semibold text-teal-400 flex items-center gap-1">
-                          <Pin className="w-3 h-3 fill-teal-400" />
+                        <span className="text-[11px] font-semibold text-accent flex items-center gap-1">
+                          <Pin className="w-3 h-3 fill-accent text-accent" />
                           <span>Disematkan</span>
                         </span>
                       ) : null}
                     </div>
 
                     {isFile ? (
-                      <div className="flex items-center gap-2 text-sm font-mono text-slate-100 truncate">
+                      <div className="flex items-center gap-2 text-sm font-mono text-text truncate">
                         {item.kind === 'photo' ? (
-                          <ImageIcon className="w-4 h-4 text-teal-400 shrink-0" />
+                          <ImageIcon className="w-4 h-4 text-accent shrink-0" />
                         ) : (
-                          <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+                          <FileText className="w-4 h-4 text-accent shrink-0" />
                         )}
                         <span className="truncate">{item.fileName}</span>
-                        <span className="text-xs text-slate-400 font-sans">
+                        <span className="text-xs text-text-muted font-sans">
                           ({formatBytes(item.fileSize)})
                         </span>
                       </div>
+                    ) : item.kind === 'link' ? (
+                      <div className="flex items-center gap-2 text-sm text-accent-text line-clamp-1 font-sans">
+                        <LinkIcon className="w-4 h-4 text-accent-text shrink-0" />
+                        <span className="truncate">{item.textBody}</span>
+                      </div>
                     ) : (
-                      <div className="text-sm text-slate-200 line-clamp-1 font-sans">
+                      <div className="text-sm text-text line-clamp-1 font-sans">
                         {item.textBody}
                       </div>
                     )}
@@ -298,11 +297,11 @@ export const RiwayatPage: React.FC<Props> = ({
                   {!isFile && item.textBody && (
                     <button
                       onClick={() => handleCopy(item.id, item.textBody!)}
-                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors"
+                      className="p-1.5 rounded-lg bg-control border border-control-border hover:bg-control-hover active:bg-control-pressed text-text-secondary transition-colors"
                       title="Salin Teks"
                     >
                       {copiedId === item.id ? (
-                        <Check className="w-4 h-4 text-teal-400" />
+                        <Check className="w-4 h-4 text-accent" />
                       ) : (
                         <Copy className="w-4 h-4" />
                       )}
@@ -312,26 +311,26 @@ export const RiwayatPage: React.FC<Props> = ({
                   {isFile && item.savedPath && item.status === 'Selesai' && (
                     <button
                       onClick={() => onOpenFolder(item.savedPath!)}
-                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors"
+                      className="p-1.5 rounded-lg bg-control border border-control-border hover:bg-control-hover active:bg-control-pressed text-text-secondary transition-colors"
                       title="Buka Folder"
                     >
-                      <FolderOpen className="w-4 h-4 text-teal-400" />
+                      <FolderOpen className="w-4 h-4 text-accent" />
                     </button>
                   )}
 
                   <button
                     onClick={() => onPin(item.id, item.pinned ? 0 : 1)}
-                    className={`p-1.5 rounded-lg hover:bg-white/10 transition-colors ${
-                      item.pinned ? 'text-teal-400' : 'text-slate-400'
+                    className={`p-1.5 rounded-lg hover:bg-control-hover transition-colors ${
+                      item.pinned ? 'text-accent' : 'text-icon-muted'
                     }`}
                     title={item.pinned ? 'Lepas Sematan' : 'Sematkan'}
                   >
-                    <Pin className={`w-4 h-4 ${item.pinned ? 'fill-teal-400' : ''}`} />
+                    <Pin className={`w-4 h-4 ${item.pinned ? 'fill-accent text-accent' : ''}`} />
                   </button>
 
                   <button
                     onClick={() => onDelete(item.id)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                    className="p-1.5 rounded-lg text-text-muted hover:text-danger-text hover:bg-danger-bg transition-colors"
                     title="Hapus"
                   >
                     <Trash2 className="w-4 h-4" />
