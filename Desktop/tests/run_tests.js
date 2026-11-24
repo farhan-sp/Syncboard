@@ -160,6 +160,8 @@ function runSubTest(file) {
     await runSubTest('m3_text.test.js');
     await runSubTest('m4_files.test.js');
     await runSubTest('m5_history_settings.test.js');
+    await runSubTest('ui_theme_tokens.test.js');
+    await runSubTest('island_reducer.test.js');
     console.log('\n=============================================');
     console.log('  ALL TEST SUITES COMPLETED SUCCESSFULLY!  ');
     console.log('=============================================\n');

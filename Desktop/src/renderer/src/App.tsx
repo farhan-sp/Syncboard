@@ -23,6 +23,7 @@ import {
   FileText,
   X,
 } from 'lucide-react';
+import logoImg from './assets/logo.png';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'kirim' | 'riwayat' | 'perangkat' | 'pengaturan'>('kirim');
@@ -45,6 +46,35 @@ export const App: React.FC = () => {
   const [pendingFileOffer, setPendingFileOffer] = useState<PendingFileOffer | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [secretWarning, setSecretWarning] = useState<string | null>(null);
+
+  // Sync theme with settings (dark, light, or system)
+  useEffect(() => {
+    const applyTheme = () => {
+      let isDark = true;
+      if (settings.theme === 'light') {
+        isDark = false;
+      } else if (settings.theme === 'dark') {
+        isDark = true;
+      } else if (settings.theme === 'system') {
+        isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    };
+
+    applyTheme();
+
+    if (settings.theme === 'system' && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const listener = () => applyTheme();
+      mediaQuery.addEventListener('change', listener);
+      return () => mediaQuery.removeEventListener('change', listener);
+    }
+  }, [settings.theme]);
 
   // Load initial data
   const loadInitialData = async () => {
@@ -258,8 +288,20 @@ export const App: React.FC = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
+  const navItems = [
+    { id: 'kirim' as const, label: 'Kirim', icon: <Send className="w-4 h-4 shrink-0" /> },
+    { id: 'riwayat' as const, label: 'Riwayat', icon: <Clock className="w-4 h-4 shrink-0" /> },
+    {
+      id: 'perangkat' as const,
+      label: 'Perangkat',
+      icon: <Smartphone className="w-4 h-4 shrink-0" />,
+      badge: devices.length,
+    },
+    { id: 'pengaturan' as const, label: 'Pengaturan', icon: <Settings className="w-4 h-4 shrink-0" /> },
+  ];
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 font-sans">
+    <div className="flex h-screen w-screen overflow-hidden bg-bg-app text-text font-sans">
       {/* Drag & Drop full window overlay */}
       <DropZone
         isDragging={isDragging}
@@ -280,28 +322,28 @@ export const App: React.FC = () => {
 
       {/* Incoming File Offer Approval Dialog */}
       {pendingFileOffer && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-black/50 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-surface border border-border rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in zoom-in-95 duration-150 text-text">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 glow-teal shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-tile text-accent flex items-center justify-center shrink-0">
                 <FileText className="w-6 h-6" />
               </div>
               <div className="min-w-0">
-                <h3 className="text-lg font-bold text-slate-100 truncate">
+                <h3 className="text-lg font-bold text-text truncate">
                   Terima Berkas Masuk?
                 </h3>
-                <p className="text-xs text-slate-400 truncate">
+                <p className="text-xs text-text-muted truncate">
                   Dari {pendingFileOffer.deviceName}
                 </p>
               </div>
             </div>
 
-            <div className="bg-slate-950/60 rounded-2xl p-4 border border-white/5 space-y-2">
-              <div className="text-xs text-slate-400">Nama Berkas:</div>
-              <div className="text-sm font-semibold text-slate-200 truncate font-mono">
+            <div className="bg-surface-inset rounded-2xl p-4 border border-border space-y-2">
+              <div className="text-xs text-text-muted">Nama Berkas:</div>
+              <div className="text-sm font-semibold text-text truncate font-mono">
                 {pendingFileOffer.name}
               </div>
-              <div className="text-xs text-slate-400 flex items-center gap-2 pt-1">
+              <div className="text-xs text-text-muted flex items-center gap-2 pt-1">
                 <span>Ukuran: {formatBytes(pendingFileOffer.size)}</span>
               </div>
             </div>
@@ -316,7 +358,7 @@ export const App: React.FC = () => {
                     accept: false,
                   });
                 }}
-                className="flex-1 py-3 px-4 rounded-xl text-sm font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-colors"
+                className="flex-1 py-3 px-4 rounded-xl text-sm font-semibold bg-danger-bg hover:opacity-90 active:opacity-80 text-danger-text border border-danger-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
               >
                 Tolak
               </button>
@@ -329,7 +371,7 @@ export const App: React.FC = () => {
                     accept: true,
                   });
                 }}
-                className="flex-1 py-3 px-4 rounded-xl text-sm font-semibold bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold transition-colors shadow-lg shadow-teal-500/20"
+                className="flex-1 py-3 px-4 rounded-xl text-sm font-bold bg-accent hover:bg-accent-hover active:bg-accent-pressed text-on-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors shadow-sm"
               >
                 Izinkan
               </button>
@@ -339,17 +381,17 @@ export const App: React.FC = () => {
       )}
 
       {/* Sidebar Navigation */}
-      <aside className="w-64 bg-slate-900 border-r border-white/5 flex flex-col p-5 shrink-0 select-none">
+      <aside className="w-64 bg-bg-sidebar border-r border-border flex flex-col p-5 shrink-0 select-none">
         {/* Brand */}
         <div className="flex items-center gap-3 mb-6 px-1">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-teal-500 to-blue-500 flex items-center justify-center text-slate-950 font-bold shadow-lg shadow-teal-500/25 glow-teal">
-            <Send className="w-5 h-5 -rotate-45" />
+          <div className="w-10 h-10 rounded-2xl bg-[#282828] border border-border flex items-center justify-center font-bold shrink-0 shadow-sm overflow-hidden p-1.5">
+            <img src={logoImg} alt="SyncBoard Logo" className="w-full h-full object-contain" />
           </div>
           <div>
-            <h1 className="font-bold text-base tracking-tight text-white">
+            <h1 className="font-bold text-base tracking-tight text-text">
               SyncBoard
             </h1>
-            <span className="text-[11px] font-semibold text-teal-400 uppercase tracking-wider block">
+            <span className="text-[11px] font-semibold text-text-muted uppercase tracking-wider block">
               P2P Lokal Wi-Fi
             </span>
           </div>
@@ -357,78 +399,54 @@ export const App: React.FC = () => {
 
         {/* Linux Secret Warning Banner if no OS keyring */}
         {secretWarning && (
-          <div className="mb-4 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="mb-4 p-3 rounded-2xl bg-surface-inset border border-border text-[11px] text-text-secondary flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-accent shrink-0 mt-0.5" />
             <div className="flex-1">
               <span>{secretWarning}</span>
             </div>
-            <button onClick={() => setSecretWarning(null)} className="text-amber-400 hover:text-white">
+            <button onClick={() => setSecretWarning(null)} className="text-text-muted hover:text-text">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
 
         {/* Nav Items */}
-        <nav className="space-y-1.5 flex-1">
-          <button
-            onClick={() => setActiveTab('kirim')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-              activeTab === 'kirim'
-                ? 'bg-gradient-to-r from-teal-500/20 to-teal-500/5 text-teal-300 border border-teal-500/30 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-            }`}
-          >
-            <Send className="w-4 h-4" />
-            <span>Kirim</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('riwayat')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-              activeTab === 'riwayat'
-                ? 'bg-gradient-to-r from-teal-500/20 to-teal-500/5 text-teal-300 border border-teal-500/30 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-            }`}
-          >
-            <Clock className="w-4 h-4" />
-            <span>Riwayat</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('perangkat')}
-            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-              activeTab === 'perangkat'
-                ? 'bg-gradient-to-r from-teal-500/20 to-teal-500/5 text-teal-300 border border-teal-500/30 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <Smartphone className="w-4 h-4" />
-              <span>Perangkat</span>
-            </div>
-            <span className="px-2 py-0.5 rounded-full text-[11px] bg-slate-800 text-slate-300 font-mono">
-              {devices.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('pengaturan')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-              activeTab === 'pengaturan'
-                ? 'bg-gradient-to-r from-teal-500/20 to-teal-500/5 text-teal-300 border border-teal-500/30 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            <span>Pengaturan</span>
-          </button>
+        <nav className="space-y-1 flex-1">
+          {navItems.map((item) => {
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                aria-current={isActive ? 'page' : undefined}
+                className={`relative w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-sidebar ${
+                  isActive
+                    ? 'bg-nav-active text-text font-semibold pl-4'
+                    : 'text-text-secondary hover:bg-nav-hover hover:text-text font-medium'
+                }`}
+              >
+                {isActive && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-accent rounded-r-full" />
+                )}
+                <div className="flex items-center gap-3">
+                  {item.icon}
+                  <span>{item.label}</span>
+                </div>
+                {item.badge !== undefined && (
+                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-badge-bg border border-badge-border text-text font-mono">
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
         {/* Bottom QR Trigger */}
-        <div className="pt-4 border-t border-white/5">
+        <div className="pt-4 border-t border-divider">
           <button
             onClick={() => setIsQRModalOpen(true)}
-            className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-teal-300 border border-teal-500/30 transition-all glow-teal"
+            className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-control hover:bg-control-hover active:bg-control-pressed text-accent border border-control-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-sidebar transition-colors"
           >
             <QrCode className="w-4 h-4" />
             <span>Tampilkan QR Pasangan</span>
@@ -437,7 +455,7 @@ export const App: React.FC = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-hidden flex flex-col">
+      <main className="flex-1 overflow-hidden flex flex-col bg-chat-bg">
         {activeTab === 'kirim' && (
           <KirimPage
             devices={devices}

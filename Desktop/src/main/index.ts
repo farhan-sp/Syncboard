@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, nativeTheme } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import * as db from './db';
@@ -8,6 +8,7 @@ import { setupIpcHandlers } from './ipc';
 import { setupTray, destroyTray } from './tray';
 import { secretManager } from './secrets';
 import { syncBoardServer } from './server';
+import { createIslandWindow, destroyIsland, handleServerActivity, broadcastThemeChanged } from './island';
 
 let mainWindow: BrowserWindow | null = null;
 let isQuitting = false;
@@ -36,13 +37,32 @@ if (!gotTheLock) {
     ];
     const preloadPath = preloadCandidates.find(p => fs.existsSync(p)) || preloadCandidates[0];
 
+    let initialBg = '#202020';
+    try {
+      const savedTheme = (db as any).getSetting('theme', 'dark');
+      if (savedTheme === 'light') {
+        initialBg = '#F3F3F3';
+      } else if (savedTheme === 'system') {
+        const { nativeTheme } = require('electron');
+        initialBg = nativeTheme.shouldUseDarkColors ? '#202020' : '#F3F3F3';
+      }
+    } catch {}
+
+    const iconCandidates = [
+      path.join(__dirname, '../renderer/src/assets/logo.png'),
+      path.join(__dirname, '../../src/renderer/src/assets/logo.png'),
+      path.join(__dirname, '../../dist/renderer/assets/logo.png'),
+    ];
+    const appIcon = iconCandidates.find(p => fs.existsSync(p));
+
     mainWindow = new BrowserWindow({
       width: 1120,
       height: 780,
       minWidth: 900,
       minHeight: 620,
       title: 'SyncBoard Desktop',
-      backgroundColor: '#090e17',
+      icon: appIcon,
+      backgroundColor: initialBg,
       webPreferences: {
         preload: preloadPath,
         contextIsolation: true,
@@ -92,6 +112,7 @@ if (!gotTheLock) {
     isQuitting = true;
     console.log('[SyncBoard] Performing graceful shutdown...');
     destroyTray();
+    destroyIsland();
 
     try {
       await syncBoardServer.stop();
@@ -133,6 +154,20 @@ if (!gotTheLock) {
     // Setup Server Event Bridge
     syncBoardServer.setEventCallback((event, data) => {
       mainWindow?.webContents.send(event, data);
+      handleServerActivity(event, data, () => mainWindow);
+    });
+
+    // Handle OS native theme changes
+    nativeTheme.on('updated', () => {
+      const savedTheme = db.getSetting('theme', 'dark');
+      if (savedTheme === 'system') {
+        const isDark = nativeTheme.shouldUseDarkColors;
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.setBackgroundColor(isDark ? '#202020' : '#F3F3F3');
+          mainWindow.webContents.send('settings:update', { key: 'theme', value: 'system' });
+        }
+        broadcastThemeChanged('system', isDark);
+      }
     });
 
     // Start TLS WSS Server
@@ -144,6 +179,9 @@ if (!gotTheLock) {
 
     // Create Main Window
     createWindow();
+
+    // Create Dynamic Island Window
+    createIslandWindow(() => mainWindow);
 
     // Setup System Tray
     if (mainWindow) {

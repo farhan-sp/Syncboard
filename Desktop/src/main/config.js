@@ -45,6 +45,9 @@ const DEFAULT_SETTINGS = {
   autoAcceptFiles: 'false',
   historyMode: 'simpan', // 'simpan' or 'kirim_sekali'
   retentionHours: '24', // 1, 24, 168 (7 days)
+  islandEnabled: 'true',
+  islandShortcut: 'CommandOrControl+Shift+Space',
+  displayMode: 'window',
   deviceId: '', // Generated on first start
 };
 

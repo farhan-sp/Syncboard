@@ -176,6 +176,9 @@ export interface AppSettings {
   retentionHours: number; // 1, 24, 168 (7 days)
   theme: AppTheme;
   startWithSystem: boolean;
+  islandEnabled?: boolean;
+  islandShortcut?: string;
+  displayMode?: 'window' | 'island';
 }
 
 export interface NetworkInfo {

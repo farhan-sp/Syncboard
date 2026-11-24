@@ -49,18 +49,18 @@ export const ChatBubble: React.FC<Props> = ({
   return (
     <div className={`flex flex-col my-2 ${isOutgoing ? 'items-end' : 'items-start'}`}>
       <div className="flex items-center gap-2 mb-1 px-1">
-        <span className="text-xs font-medium text-slate-400">
+        <span className="text-xs font-medium text-text-secondary">
           {isOutgoing ? 'Komputer Ini' : transfer.deviceName || 'Ponsel'}
         </span>
-        <span className="text-[11px] text-slate-500">{formatTime(transfer.createdAt)}</span>
+        <span className="text-[11px] text-text-muted">{formatTime(transfer.createdAt)}</span>
         <TransferStatusChip status={transfer.status} size="sm" />
       </div>
 
       <div
-        className={`max-w-[85%] sm:max-w-[70%] rounded-2xl p-4 shadow-lg border ${
+        className={`max-w-[85%] sm:max-w-[70%] rounded-2xl p-4 shadow-sm border ${
           isOutgoing
-            ? 'bg-gradient-to-br from-blue-950/80 to-slate-900/90 border-blue-500/20 text-blue-50'
-            : 'bg-gradient-to-br from-teal-950/80 to-slate-900/90 border-teal-500/20 text-teal-50'
+            ? 'bg-neutral-fill-bg text-neutral-fill-text border-transparent'
+            : 'bg-surface text-text border-border'
         }`}
       >
         {/* Text or Link */}
@@ -70,7 +70,11 @@ export const ChatBubble: React.FC<Props> = ({
               {transfer.textBody}
             </div>
             {transfer.kind === 'link' && (
-              <div className="mt-2 pt-2 border-t border-white/10 flex items-center gap-1.5 text-xs text-teal-400">
+              <div
+                className={`mt-2 pt-2 border-t flex items-center gap-1.5 text-xs text-accent-text font-medium ${
+                  isOutgoing ? 'border-neutral-fill-text/15' : 'border-divider'
+                }`}
+              >
                 <ExternalLink className="w-3.5 h-3.5" />
                 <span>Tautan Web</span>
               </div>
@@ -82,14 +86,28 @@ export const ChatBubble: React.FC<Props> = ({
         {isFile && (
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-teal-400">
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  isOutgoing
+                    ? 'bg-[rgba(0,0,0,0.08)] dark:bg-[rgba(0,0,0,0.14)] text-neutral-fill-text'
+                    : 'bg-tile border border-border text-accent'
+                }`}
+              >
                 <FileText className="w-5 h-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="font-medium text-sm text-slate-100 truncate font-mono">
+                <div
+                  className={`font-medium text-sm truncate font-mono ${
+                    isOutgoing ? 'text-neutral-fill-text font-semibold' : 'text-text'
+                  }`}
+                >
                   {transfer.fileName || 'Berkas'}
                 </div>
-                <div className="text-xs text-slate-400">
+                <div
+                  className={`text-xs ${
+                    isOutgoing ? 'text-neutral-fill-text/70' : 'text-text-muted'
+                  }`}
+                >
                   {formatBytes(transfer.fileSize)}
                 </div>
               </div>
@@ -98,9 +116,9 @@ export const ChatBubble: React.FC<Props> = ({
             {/* Transfer Progress bar if in progress */}
             {transfer.status === 'Mengirim' && (
               <div className="space-y-1">
-                <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-progress-track rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-teal-400 to-blue-400 transition-all duration-300"
+                    className="h-full bg-accent transition-all duration-300"
                     style={{
                       width: `${
                         transfer.fileSize && transfer.bytesTransferred
@@ -110,7 +128,11 @@ export const ChatBubble: React.FC<Props> = ({
                     }}
                   />
                 </div>
-                <div className="flex justify-between text-[11px] text-slate-400 font-mono">
+                <div
+                  className={`flex justify-between text-[11px] font-mono ${
+                    isOutgoing ? 'text-neutral-fill-text/70' : 'text-text-muted'
+                  }`}
+                >
                   <span>
                     {formatBytes(transfer.bytesTransferred)} / {formatBytes(transfer.fileSize)}
                   </span>
@@ -122,17 +144,25 @@ export const ChatBubble: React.FC<Props> = ({
         )}
 
         {/* Actions per item */}
-        <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center gap-2 justify-end">
+        <div
+          className={`mt-3 pt-2.5 border-t flex items-center gap-2 justify-end ${
+            isOutgoing ? 'border-neutral-fill-text/15' : 'border-divider'
+          }`}
+        >
           {/* Copy button for text */}
           {!isFile && (
             <button
               onClick={handleCopy}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 text-slate-200 transition-colors"
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                isOutgoing
+                  ? 'bg-black/10 hover:bg-black/15 text-neutral-fill-text'
+                  : 'bg-control hover:bg-control-hover border border-control-border text-text-secondary hover:text-text'
+              }`}
             >
               {copied ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-teal-400" />
-                  <span className="text-teal-400 font-medium">Tersalin!</span>
+                  <Check className="w-3.5 h-3.5 text-accent" />
+                  <span className="text-accent font-medium">Tersalin!</span>
                 </>
               ) : (
                 <>
@@ -147,9 +177,13 @@ export const ChatBubble: React.FC<Props> = ({
           {isFile && transfer.savedPath && transfer.status === 'Selesai' && (
             <button
               onClick={() => onOpenFolder && onOpenFolder(transfer.savedPath!)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 text-slate-200 transition-colors"
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                isOutgoing
+                  ? 'bg-black/10 hover:bg-black/15 text-neutral-fill-text'
+                  : 'bg-control hover:bg-control-hover border border-control-border text-text-secondary hover:text-text'
+              }`}
             >
-              <FolderOpen className="w-3.5 h-3.5 text-teal-400" />
+              <FolderOpen className="w-3.5 h-3.5 text-accent" />
               <span>Buka Folder</span>
             </button>
           )}
@@ -158,7 +192,7 @@ export const ChatBubble: React.FC<Props> = ({
           {(transfer.status === 'Gagal' || transfer.status === 'Dibatalkan') && (
             <button
               onClick={() => onRetry && onRetry(transfer.id)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 transition-colors"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-control hover:bg-control-hover border border-control-border text-accent transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Coba Lagi</span>
@@ -169,7 +203,7 @@ export const ChatBubble: React.FC<Props> = ({
           {transfer.status === 'Mengirim' && (
             <button
               onClick={() => onCancel && onCancel(transfer.id)}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition-colors"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-danger-bg hover:opacity-90 text-danger-text border border-danger-border transition-colors"
             >
               <X className="w-3.5 h-3.5" />
               <span>Batal</span>

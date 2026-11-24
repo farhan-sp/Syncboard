@@ -89,6 +89,9 @@ function getAllSettings() {
     retentionHours: parseInt(getSetting('retentionHours', '24') || '24', 10),
     theme: getSetting('theme', 'dark') || 'dark',
     startWithSystem: getSetting('startWithSystem', 'false') === 'true',
+    islandEnabled: getSetting('islandEnabled', 'true') === 'true',
+    islandShortcut: getSetting('islandShortcut', 'CommandOrControl+Shift+Space') || 'CommandOrControl+Shift+Space',
+    displayMode: getSetting('displayMode', 'window') || 'window',
   };
 }
 

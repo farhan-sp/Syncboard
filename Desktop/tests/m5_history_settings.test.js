@@ -244,7 +244,12 @@ assert(typeof info.firewallCmd === 'string' && info.firewallCmd.length > 0, `Fir
 assert(Array.isArray(info.tips) && info.tips.length > 0, 'Troubleshooting tips list provided');
 
 // Clean up test environment
-fs.rmSync(TEST_DIR, { recursive: true, force: true });
+try {
+  if (db?.close) db.close();
+} catch {}
+try {
+  fs.rmSync(TEST_DIR, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+} catch {}
 
 console.log('\n====================================================');
 console.log(`M5 Test Results: ${passed} PASSED, ${failed} FAILED`);

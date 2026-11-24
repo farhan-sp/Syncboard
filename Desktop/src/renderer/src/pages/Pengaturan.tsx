@@ -27,47 +27,47 @@ export const PengaturanPage: React.FC<Props> = ({
   onClearAllHistory,
 }) => {
   return (
-    <div className="flex flex-col h-full bg-slate-950 p-6 overflow-y-auto space-y-6 max-w-4xl mx-auto w-full">
+    <div className="flex flex-col h-full bg-chat-bg p-6 overflow-y-auto space-y-6 max-w-4xl mx-auto w-full">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-bold text-slate-100">Pengaturan Aplikasi</h2>
-        <p className="text-xs text-slate-400 mt-1">
+        <h2 className="text-xl font-bold text-text">Pengaturan Aplikasi</h2>
+        <p className="text-xs text-text-muted mt-1">
           Konfigurasi penyimpanan berkas, privasi, dan tampilan antarmuka
         </p>
       </div>
 
       {/* 1. File Storage Settings */}
-      <div className="glass-panel rounded-3xl p-6 space-y-5">
-        <h3 className="text-sm font-bold text-teal-400 uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-surface border border-border rounded-3xl p-6 space-y-5 text-text">
+        <h3 className="text-sm font-bold text-accent uppercase tracking-wider flex items-center gap-2">
           <Folder className="w-4 h-4" />
           <span>Penyimpanan Berkas</span>
         </h3>
 
         {/* Download Folder Picker */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-950/60 border border-white/5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-surface-inset border border-border">
           <div className="min-w-0">
-            <span className="text-sm font-semibold text-slate-200 block">
+            <span className="text-sm font-semibold text-text block">
               Folder Unduhan SyncBoard
             </span>
-            <span className="text-xs text-slate-400 block font-mono truncate mt-0.5">
+            <span className="text-xs text-text-muted block font-mono truncate mt-0.5">
               {settings.downloadDir || '~/Downloads/SyncBoard'}
             </span>
           </div>
           <button
             onClick={onSelectDownloadDir}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors shrink-0 self-start sm:self-auto"
+            className="px-4 py-2 rounded-xl text-xs font-semibold bg-control hover:bg-control-hover active:bg-control-pressed text-text-secondary border border-control-border transition-colors shrink-0 self-start sm:self-auto"
           >
             Ubah Folder
           </button>
         </div>
 
         {/* Confirm Before Receive Toggle */}
-        <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-slate-950/60 border border-white/5">
+        <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-surface-inset border border-border">
           <div>
-            <span className="text-sm font-semibold text-slate-200 block">
+            <span className="text-sm font-semibold text-text block">
               Konfirmasi Penerimaan Berkas
             </span>
-            <span className="text-xs text-slate-400 block mt-0.5">
+            <span className="text-xs text-text-muted block mt-0.5">
               Tampilkan dialog "Terima" / "Tolak" sebelum berkas dari ponsel disimpan ke komputer
             </span>
           </div>
@@ -78,14 +78,14 @@ export const PengaturanPage: React.FC<Props> = ({
               onChange={(e) => onUpdateSetting('confirmBeforeReceive', e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
+            <div className="w-11 h-6 rounded-full border border-toggle-off-border bg-transparent peer-focus:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-accent peer-checked:bg-accent peer-checked:border-accent transition-all peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-toggle-off-knob peer-checked:after:bg-toggle-on-knob after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
           </label>
         </div>
       </div>
 
       {/* 2. History & Privacy Mode */}
-      <div className="glass-panel rounded-3xl p-6 space-y-5">
-        <h3 className="text-sm font-bold text-teal-400 uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-surface border border-border rounded-3xl p-6 space-y-5 text-text">
+        <h3 className="text-sm font-bold text-accent uppercase tracking-wider flex items-center gap-2">
           <Shield className="w-4 h-4" />
           <span>Mode Riwayat & Privasi</span>
         </h3>
@@ -96,19 +96,19 @@ export const PengaturanPage: React.FC<Props> = ({
             onClick={() => onUpdateSetting('historyMode', 'simpan')}
             className={`p-5 rounded-2xl border text-left transition-all ${
               settings.historyMode === 'simpan'
-                ? 'bg-teal-500/10 border-teal-500/50 ring-1 ring-teal-500/50'
-                : 'bg-slate-950/60 border-white/5 hover:border-white/10'
+                ? 'border-2 border-accent bg-accent-selected-bg ring-1 ring-accent'
+                : 'bg-surface border border-chip-border hover:border-border'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="font-bold text-sm text-slate-100">
+              <span className="font-bold text-sm text-text">
                 Mode Simpan (Permanen)
               </span>
               {settings.historyMode === 'simpan' && (
-                <CheckCircle2 className="w-4 h-4 text-teal-400" />
+                <CheckCircle2 className="w-4 h-4 text-accent" />
               )}
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-text-muted leading-relaxed">
               Semua teks dan catatan transfer disimpan terus di komputer ini sampai Anda menghapusnya secara manual.
             </p>
           </button>
@@ -117,19 +117,19 @@ export const PengaturanPage: React.FC<Props> = ({
             onClick={() => onUpdateSetting('historyMode', 'kirim_sekali')}
             className={`p-5 rounded-2xl border text-left transition-all ${
               settings.historyMode === 'kirim_sekali'
-                ? 'bg-teal-500/10 border-teal-500/50 ring-1 ring-teal-500/50'
-                : 'bg-slate-950/60 border-white/5 hover:border-white/10'
+                ? 'border-2 border-accent bg-accent-selected-bg ring-1 ring-accent'
+                : 'bg-surface border border-chip-border hover:border-border'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="font-bold text-sm text-slate-100">
+              <span className="font-bold text-sm text-text">
                 Mode Kirim Sekali (Ephemeral)
               </span>
               {settings.historyMode === 'kirim_sekali' && (
-                <CheckCircle2 className="w-4 h-4 text-teal-400" />
+                <CheckCircle2 className="w-4 h-4 text-accent" />
               )}
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-text-muted leading-relaxed">
               Teks dan riwayat transfer dihapus secara otomatis dari komputer ini setelah masa retensi berakhir.
             </p>
           </button>
@@ -137,19 +137,19 @@ export const PengaturanPage: React.FC<Props> = ({
 
         {/* Retention Duration Selector if Kirim Sekali */}
         {settings.historyMode === 'kirim_sekali' && (
-          <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-950/60 border border-white/5">
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-surface-inset border border-border">
             <div>
-              <span className="text-sm font-semibold text-slate-200 block">
+              <span className="text-sm font-semibold text-text block">
                 Masa Retensi Mode Kirim Sekali
               </span>
-              <span className="text-xs text-slate-400 block mt-0.5">
+              <span className="text-xs text-text-muted block mt-0.5">
                 Lama waktu riwayat tersimpan sebelum dihapus otomatis
               </span>
             </div>
             <select
               value={settings.retentionHours}
               onChange={(e) => onUpdateSetting('retentionHours', parseInt(e.target.value, 10))}
-              className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-teal-500"
+              className="bg-surface border border-border rounded-xl px-3 py-1.5 text-xs font-semibold text-text focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
             >
               {RETENTION_OPTIONS.map((opt) => (
                 <option key={opt.hours} value={opt.hours}>
@@ -161,10 +161,10 @@ export const PengaturanPage: React.FC<Props> = ({
         )}
 
         {/* Clear Explanation in Indonesian */}
-        <div className="p-4 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-start gap-3 text-xs text-teal-200">
-          <Info className="w-5 h-5 text-teal-400 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-2xl bg-surface-inset border border-border flex items-start gap-3 text-xs text-text-muted">
+          <Info className="w-5 h-5 text-accent shrink-0 mt-0.5" />
           <p className="leading-relaxed">
-            <strong>Penjelasan Batasan Penghapusan:</strong> Menghapus riwayat transfer hanya berlaku untuk catatan di aplikasi komputer ini. Berkas yang sudah tersimpan di folder disk tidak akan pernah dihapus secara otomatis demi keamanan data Anda.
+            <strong className="text-text">Penjelasan Batasan Penghapusan:</strong> Menghapus riwayat transfer hanya berlaku untuk catatan di aplikasi komputer ini. Berkas yang sudah tersimpan di folder disk tidak akan pernah dihapus secara otomatis demi keamanan data Anda.
           </p>
         </div>
 
@@ -172,7 +172,7 @@ export const PengaturanPage: React.FC<Props> = ({
         <div className="pt-2">
           <button
             onClick={onClearAllHistory}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-danger-bg hover:opacity-90 active:opacity-80 text-danger-text border border-danger-border transition-colors"
           >
             <Trash2 className="w-4 h-4" />
             <span>Hapus Semua Riwayat Transfer</span>
@@ -181,30 +181,30 @@ export const PengaturanPage: React.FC<Props> = ({
       </div>
 
       {/* 3. Theme & System */}
-      <div className="glass-panel rounded-3xl p-6 space-y-5">
-        <h3 className="text-sm font-bold text-teal-400 uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-surface border border-border rounded-3xl p-6 space-y-5 text-text">
+        <h3 className="text-sm font-bold text-accent uppercase tracking-wider flex items-center gap-2">
           <Moon className="w-4 h-4" />
           <span>Tema & Sistem</span>
         </h3>
 
         {/* Theme Selector */}
-        <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-950/60 border border-white/5">
+        <div className="flex items-center justify-between p-4 rounded-2xl bg-surface-inset border border-border">
           <div>
-            <span className="text-sm font-semibold text-slate-200 block">
+            <span className="text-sm font-semibold text-text block">
               Tema Tampilan
             </span>
-            <span className="text-xs text-slate-400 block mt-0.5">
+            <span className="text-xs text-text-muted block mt-0.5">
               Pilih mode gelap atau sesuaikan dengan sistem operasi
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800">
+          <div className="flex items-center gap-1.5 bg-control-track p-1 rounded-xl border border-border">
             <button
               onClick={() => onUpdateSetting('theme', 'dark')}
-              className={`p-1.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`p-1.5 rounded-lg text-xs font-medium transition-all ${
                 settings.theme === 'dark'
-                  ? 'bg-teal-500/20 text-teal-300 font-bold'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-control-selected text-control-selected-text shadow-control-selected font-semibold'
+                  : 'text-text-secondary hover:text-text'
               }`}
               title="Gelap"
             >
@@ -212,10 +212,10 @@ export const PengaturanPage: React.FC<Props> = ({
             </button>
             <button
               onClick={() => onUpdateSetting('theme', 'light')}
-              className={`p-1.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`p-1.5 rounded-lg text-xs font-medium transition-all ${
                 settings.theme === 'light'
-                  ? 'bg-teal-500/20 text-teal-300 font-bold'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-control-selected text-control-selected-text shadow-control-selected font-semibold'
+                  : 'text-text-secondary hover:text-text'
               }`}
               title="Terang"
             >
@@ -223,10 +223,10 @@ export const PengaturanPage: React.FC<Props> = ({
             </button>
             <button
               onClick={() => onUpdateSetting('theme', 'system')}
-              className={`p-1.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`p-1.5 rounded-lg text-xs font-medium transition-all ${
                 settings.theme === 'system'
-                  ? 'bg-teal-500/20 text-teal-300 font-bold'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-control-selected text-control-selected-text shadow-control-selected font-semibold'
+                  : 'text-text-secondary hover:text-text'
               }`}
               title="Sistem"
             >
@@ -235,13 +235,34 @@ export const PengaturanPage: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Start with System */}
-        <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-slate-950/60 border border-white/5">
+        {/* Tampilkan island */}
+        <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-surface-inset border border-border">
           <div>
-            <span className="text-sm font-semibold text-slate-200 block">
+            <span className="text-sm font-semibold text-text block">
+              Tampilkan island
+            </span>
+            <span className="text-xs text-text-muted block mt-0.5">
+              Tampilkan pil ringkas di bagian tengah atas layar untuk jalan pintas cepat
+            </span>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer shrink-0">
+            <input
+              type="checkbox"
+              checked={settings.islandEnabled ?? true}
+              onChange={(e) => onUpdateSetting('islandEnabled', e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 rounded-full border border-toggle-off-border bg-transparent peer-focus:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-accent peer-checked:bg-accent peer-checked:border-accent transition-all peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-toggle-off-knob peer-checked:after:bg-toggle-on-knob after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+          </label>
+        </div>
+
+        {/* Start with System */}
+        <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-surface-inset border border-border">
+          <div>
+            <span className="text-sm font-semibold text-text block">
               Jalankan Otomatis saat Komputer Menyala
             </span>
-            <span className="text-xs text-slate-400 block mt-0.5">
+            <span className="text-xs text-text-muted block mt-0.5">
               SyncBoard akan otomatis aktif di baki sistem (system tray) saat login
             </span>
           </div>
@@ -252,14 +273,14 @@ export const PengaturanPage: React.FC<Props> = ({
               onChange={(e) => onUpdateSetting('startWithSystem', e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
+            <div className="w-11 h-6 rounded-full border border-toggle-off-border bg-transparent peer-focus:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-accent peer-checked:bg-accent peer-checked:border-accent transition-all peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-toggle-off-knob peer-checked:after:bg-toggle-on-knob after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
           </label>
         </div>
       </div>
 
       {/* 4. About & Version */}
-      <div className="p-4 rounded-2xl border border-white/5 bg-slate-900/40 text-center text-xs text-slate-500 space-y-1">
-        <p className="font-semibold text-slate-400">SyncBoard Desktop v1.0.0</p>
+      <div className="p-4 rounded-2xl border border-border bg-surface text-center text-xs text-text-muted space-y-1">
+        <p className="font-semibold text-text">SyncBoard Desktop v1.0.0</p>
         <p>Transfer data lokal peer-to-peer tanpa internet, cloud, atau akun.</p>
       </div>
     </div>
